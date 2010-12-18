@@ -10,12 +10,12 @@ import solver.plugin.IPuzzlePane;
 import solver.plugin.IPuzzleType;
 import solver.plugin.ISolver;
 
-public class ConcretePuzzleType implements IPuzzleType
+public class ConcretePuzzlePlugin implements IPuzzleType
 {
 	private int i;
 	private EnumMap<PuzzleMode, IPuzzlePane> panes;
 	
-	public ConcretePuzzleType()
+	public ConcretePuzzlePlugin()
 	{
 		this.i = 1;
 		panes = new EnumMap<PuzzleMode, IPuzzlePane>(PuzzleMode.class);
