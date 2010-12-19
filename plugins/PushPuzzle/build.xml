@@ -45,7 +45,7 @@
     <target name="jar" depends="build">
         <jar destfile="${plugin.dir}/${jar.file}">
             <fileset dir="bin" />
-            <fileset dir="images" />
+            <fileset dir="resources" />
         </jar>
     </target>
 </project>
