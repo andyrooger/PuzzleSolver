@@ -43,6 +43,9 @@
         </javac>
     </target>
     <target name="jar" depends="build">
-        <jar destfile="${plugin.dir}/${jar.file}" basedir="bin" />
+        <jar destfile="${plugin.dir}/${jar.file}">
+            <fileset dir="bin" />
+            <fileset dir="images" />
+        </jar>
     </target>
 </project>
