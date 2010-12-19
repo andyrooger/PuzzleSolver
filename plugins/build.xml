@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="build" name="PuzzleSolver">
+    <target name="clean">
+        <ant antfile="build.xml" dir="./ConcretePuzzlePlugin" inheritAll="false" target="clean"/>
+    </target>
+    <target name="build">
+        <ant antfile="build.xml" dir="./ConcretePuzzlePlugin" inheritAll="false" target="jar"/>
+    </target>
+</project>

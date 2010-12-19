@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="build" name="PuzzleSolver">
+    <target name="clean">
+        <ant antfile="build.xml" dir="./PuzzleSolver" inheritAll="false" target="clean"/>
+        <ant antfile="build.xml" dir="./plugins" inheritAll="false" target="clean"/>
+    </target>
+    <target name="build">
+        <ant antfile="build.xml" dir="./plugins" inheritAll="false" target="build"/>
+        <ant antfile="build.xml" dir="./PuzzleSolver" inheritAll="false" target="build"/>
+    </target>
+    <target name="solve" depends="build">
+        <ant antfile="build.xml" dir="./PuzzleSolver" inheritAll="false" target="solve"/>
+    </target>
+</project>

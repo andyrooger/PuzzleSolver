@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="jar" name="ConcretePuzzlePlugin">
+    <property name="PuzzleSolver.location" value="../../PuzzleSolver"/>
+    <property name="jar.file" value="ConcretePuzzlePlugin.jar"/>
+    <property name="plugin.dir" value="../../bin/config/plugin"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.6"/>
+    <property name="source" value="1.6"/>
+    <path id="PuzzleSolver.classpath">
+        <pathelement location="${PuzzleSolver.location}/bin"/>
+    </path>
+    <path id="ConcretePuzzlePlugin.classpath">
+        <pathelement location="bin"/>
+        <path refid="PuzzleSolver.classpath"/>
+    </path>
+    <target name="init">
+        <mkdir dir="bin"/>
+        <copy includeemptydirs="false" todir="bin">
+            <fileset dir="src">
+                <exclude name="**/*.launch"/>
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
+        <mkdir dir="${plugin.dir}"/>
+    </target>
+    <target name="clean">
+        <delete dir="bin"/>
+        <delete file="${plugin.dir}/${jar.file}"/>
+    </target>
+    <target depends="clean" name="cleanall">
+        <ant antfile="build.xml" dir="${PuzzleSolver.location}" inheritAll="false" target="clean"/>
+    </target>
+    <target depends="build-subprojects,build-project" name="build"/>
+    <target name="build-subprojects">
+        <ant antfile="build.xml" dir="${PuzzleSolver.location}" inheritAll="false" target="build-project" />
+    </target>
+    <target depends="init" name="build-project">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+            <src path="src"/>
+            <classpath refid="ConcretePuzzlePlugin.classpath"/>
+        </javac>
+    </target>
+    <target name="jar" depends="build">
+        <jar destfile="${plugin.dir}/ConcretePuzzlePlugin.jar" basedir="bin" />
+    </target>
+</project>
