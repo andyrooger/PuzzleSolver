@@ -43,6 +43,6 @@
         </javac>
     </target>
     <target name="jar" depends="build">
-        <jar destfile="${plugin.dir}/ConcretePuzzlePlugin.jar" basedir="bin" />
+        <jar destfile="${plugin.dir}/${jar.file}" basedir="bin" />
     </target>
 </project>
