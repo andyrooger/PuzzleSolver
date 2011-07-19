@@ -36,7 +36,9 @@ class SolverGUI(tkinter.Frame):
         slv.grid(sticky="nwe", row=0, column=2)
 
         self.content = None
-        self.setContent(tkinter.Label(self, text="No puzzle type is currently selected."))
+
+        solver.state.puzzle.onChange(self.onPuzzleChange)
+        solver.state.puzzle.change(None)
 
     def setContent(self, frame):
         if self.content != None:
@@ -44,14 +46,29 @@ class SolverGUI(tkinter.Frame):
         self.content = frame
         self.content.grid(sticky="nsew", row=1, column=1, columnspan=2)
 
+    def onPuzzleChange(self, type):
+        frame = (type.get(solver.state.mode.value()).getFrame(self) if type != None
+                else tkinter.Label(self, text="No puzzle type is currently selected."))
+        self.setContent(frame)
+
 def start_gui(pluginmodule):
     class Dummy:
+        def __init__(self, i):
+            self.i = i
         def name(self):
-            return "Lala"
-    solver.state.puzzle.allowable = [Dummy() for a in range(10)]
+            return "Lala " + str(self.i)
+        def get(self, mode):
+            upper = self
+            class Dummy2:
+                def getFrame(self, master):
+                    return tkinter.Label(master, text="Hello I am " + str(upper.i) + " and my mode is " + mode)
+            return Dummy2()
+    solver.state.puzzle.allowable = [Dummy(a) for a in range(10)] + [None]
+
+    APP_TITLE = "Puzzle Solver"
 
     root = tkinter.Tk()
-    root.title("Puzzle Solver")
+    root.title(APP_TITLE)
 
     def try_quit():
         solver.state.quitting.change(True)
@@ -60,6 +77,13 @@ def start_gui(pluginmodule):
         if quitting:
             root.destroy()
     solver.state.quitting.onChange(do_quit)
+
+    def puzzle_change(n_puz):
+        if n_puz == None:
+            root.title(APP_TITLE)
+        else:
+            root.title(APP_TITLE + " - " + n_puz.name().title())
+    solver.state.puzzle.onChange(puzzle_change)
 
     root.protocol("WM_DELETE_WINDOW", try_quit)
     appwin = SolverGUI(root)
