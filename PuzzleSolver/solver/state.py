@@ -42,6 +42,18 @@ class WatchedValue:
 
 # GLOBAL STATE VARIABLES
 
-puzzle = WatchedValue(None, None)
+puzzle = WatchedValue(None)
 mode = WatchedValue(None, "CREATE", "PLAY")
 quitting = WatchedValue(False, True, False)
+
+view = WatchedValue(None)
+
+def update_puzzle(p):
+    update_view(p, mode.value())
+def update_mode(m):
+    update_view(puzzle.value(), m)
+def update_view(p, m):
+    view.change(None if p == None or m == None else p.get(m))
+
+puzzle.onChange(update_puzzle)
+mode.onChange(update_mode)

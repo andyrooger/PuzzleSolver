@@ -35,8 +35,7 @@ class SolverGUI(tkinter.Frame):
 
         self.content = None
 
-        solver.state.mode.onChange(self.onModeChange)
-        solver.state.puzzle.onChange(self.onPuzzleChange)
+        solver.state.view.onChange(self.onViewChange)
         solver.state.puzzle.change(None)
 
     def setContent(self, frame):
@@ -45,15 +44,10 @@ class SolverGUI(tkinter.Frame):
         self.content = frame
         self.content.grid(sticky="nsew", row=1, column=1, columnspan=2)
 
-    def onPuzzleChange(self, type):
-        frame = (type.get(solver.state.mode.value()).getFrame(self) if type != None
-                else tkinter.Label(self, text="No puzzle type is currently selected."))
-        self.setContent(frame)
-
-    def onModeChange(self, mode):
-        puzzle = solver.state.puzzle.value()
-        frame = (puzzle.get(mode).getFrame(self) if puzzle != None
-                else tkinter.Label(self, text="No puzzle type is currently selected."))
+    def onViewChange(self, view):
+        frame = (
+            tkinter.Label(self, text="No puzzle type is currently selected.")
+            if view == None else view.getFrame(self))
         self.setContent(frame)
 
 def start_gui(pluginmodule):
