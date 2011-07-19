@@ -8,8 +8,8 @@ import tkinter
 class ControlPanel(tkinter.Frame):
     """Control panel widget."""
 
-    def __init__(self, master, *vargs, **kwargs):
-        tkinter.Frame.__init__(self, master, *vargs, **kwargs)
+    def __init__(self, master):
+        tkinter.Frame.__init__(self, master)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
