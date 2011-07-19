@@ -1,3 +1,2 @@
-bin/config/plugin/*
-*.class
-plugins/*/bin/*
+*.pyc
+*__pycache__*
