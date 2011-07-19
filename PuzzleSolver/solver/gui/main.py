@@ -21,14 +21,12 @@ class SolverGUI(tkinter.Frame):
         self.grid_columnconfigure(1, weight=1)
 
         ctrlpanel = ControlPanel(self)
-        ctrlpanel.setEnabled(False)
         ctrlpanel.grid(sticky="sew", row=2, column=0, columnspan=3)
 
         pzlChoice = PuzzleChoice(self)
         pzlChoice.grid(sticky="wns", row=1, column=0)
 
         mdChoice = ModeChoice(self)
-        mdChoice.setEnabled(False)
         mdChoice.grid(sticky="nwe", row=0, column=0, columnspan=2)
 
         slv = SolverButton(self)
@@ -37,6 +35,7 @@ class SolverGUI(tkinter.Frame):
 
         self.content = None
 
+        solver.state.mode.onChange(self.onModeChange)
         solver.state.puzzle.onChange(self.onPuzzleChange)
         solver.state.puzzle.change(None)
 
@@ -48,6 +47,12 @@ class SolverGUI(tkinter.Frame):
 
     def onPuzzleChange(self, type):
         frame = (type.get(solver.state.mode.value()).getFrame(self) if type != None
+                else tkinter.Label(self, text="No puzzle type is currently selected."))
+        self.setContent(frame)
+
+    def onModeChange(self, mode):
+        puzzle = solver.state.puzzle.value()
+        frame = (puzzle.get(mode).getFrame(self) if puzzle != None
                 else tkinter.Label(self, text="No puzzle type is currently selected."))
         self.setContent(frame)
 

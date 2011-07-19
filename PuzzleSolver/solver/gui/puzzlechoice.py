@@ -24,10 +24,12 @@ class PuzzleChoice(tkinter.Frame):
                 self.selector.add(plugin.name(), plugin)
         self.selector.grid(row=1, sticky="nsew")
 
+        solver.state.puzzle.onChange(self.setSelected)
+
     def changePuzzle(self, puzzle):
         if solver.state.puzzle.change(None):
             solver.state.mode.change("CREATE")
             solver.state.puzzle.change(puzzle)
 
-    def setEnabled(self, enabled):
-        self.selector.setEnabled(enabled)
+    def setSelected(self, puzzle):
+        self.selector.selection(puzzle)
