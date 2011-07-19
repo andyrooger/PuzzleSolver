@@ -29,7 +29,13 @@ class CancellableSelector(tkinter.Frame):
                 b.config(relief=tkinter.RAISED)
         self._selected = item
 
-    def selected(self):
+    def selection(self, select=None):
+        """Get selection or force change."""
+
+        if select != None:
+            self._selected = select
+            self._select(select)
+
         return self._selected
 
     def add(self, text, item):
