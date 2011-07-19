@@ -5,7 +5,7 @@ Contains puzzle type selection controls.
 
 import tkinter
 
-from .. utility.cancellableselector import CancellableSelector
+from .. utility.buttonselector import ButtonSelector
 
 class PuzzleChoice(tkinter.Frame):
     """Puzzle type selection widget."""
@@ -16,7 +16,7 @@ class PuzzleChoice(tkinter.Frame):
         self.grid_rowconfigure(1, weight=1)
         tkinter.Label(self, text="Choose a puzzle type:").grid(row=0, sticky="new")
 
-        self.selector = CancellableSelector(self, vertical=True, selected=(lambda x: False))
+        self.selector = ButtonSelector(self, vertical=True)
         for plugin in plugins:
             self.selector.add(plugin.name(), plugin)
         self.selector.grid(row=1, sticky="nsew")

@@ -1,11 +1,11 @@
 """
-Toggle button group that works as a cancellable radio group.
+Toggle button group that works as a radio group.
 
 """
 
 import tkinter
 
-class CancellableSelector(tkinter.Frame):
+class ButtonSelector(tkinter.Frame):
     """Frame that allows adding any number of toggle buttons."""
 
     def __init__(self, master, vertical=False, selected=None):
@@ -40,19 +40,19 @@ class CancellableSelector(tkinter.Frame):
 
     def add(self, text, item):
         def callback():
-            ok = self.cb_selected(item) if self.cb_selected != None else True
-            if ok != False:
-                self._select(item)
+            if self.cb_selected and self.selection() is not item:
+                self.cb_selected(item)
+            self._select(item)
 
         dims = self.grid_size()
         dims = dims[1] if self.vertical else dims[0]
         btn = tkinter.Button(self, text=text, command=callback)
         if self.vertical:
             self.grid_rowconfigure(dims, weight=1)
-            btn.grid(row=dims, column=0, sticky="ew")
+            btn.grid(row=dims, column=0, sticky="nsew")
         else:
             self.grid_columnconfigure(dims, weight=1)
-            btn.grid(row=0, column=dims, sticky="ns")
+            btn.grid(row=0, column=dims, sticky="nsew")
         self.buttons.add((btn, item))
 
     def setEnabled(self, enabled):
