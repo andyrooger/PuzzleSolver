@@ -52,6 +52,16 @@ def start_gui(pluginmodule):
 
     root = tkinter.Tk()
     root.title("Puzzle Solver")
+
+    def try_quit():
+        solver.state.quitting.change(True)
+
+    def do_quit(quitting):
+        if quitting:
+            root.destroy()
+    solver.state.quitting.onChange(do_quit)
+
+    root.protocol("WM_DELETE_WINDOW", try_quit)
     appwin = SolverGUI(root)
     appwin.pack(expand=True, fill=tkinter.BOTH)
     appwin.mainloop()

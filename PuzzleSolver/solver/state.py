@@ -44,3 +44,4 @@ class WatchedValue:
 
 puzzle = WatchedValue(None, None)
 mode = WatchedValue(None, "CREATE", "PLAY")
+quitting = WatchedValue(False, True, False)
