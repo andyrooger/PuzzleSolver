@@ -48,3 +48,8 @@ class CancellableSelector(tkinter.Frame):
             self.grid_columnconfigure(dims, weight=1)
             btn.grid(row=0, column=dims, sticky="nsew")
         self.buttons.add((btn, item))
+
+    def setEnabled(self, enabled):
+        state = tkinter.ENABLED if enabled else tkinter.DISABLED
+        for b, i in self.buttons:
+            b.configure(state=state)
