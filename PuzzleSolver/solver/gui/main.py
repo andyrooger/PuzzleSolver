@@ -12,6 +12,7 @@ from . controlpanel import ControlPanel
 from . puzzlechoice import PuzzleChoice
 from . modechoice import ModeChoice
 from . solverbutton import SolverButton
+from . puzzlesaver import PuzzleSaver
 
 class SolverGUI(tkinter.Frame):
     """Main window for the puzzle solver."""
@@ -38,11 +39,19 @@ class SolverGUI(tkinter.Frame):
         solver.state.view.onChange(self.onViewChange)
         solver.state.puzzle.change(None)
 
+        solver.state.mode.vitoChange(self.vitoPuzzleOrModeChange)
+        solver.state.puzzle.vitoChange(self.vitoPuzzleOrModeChange)
+
     def setContent(self, frame):
         if self.content != None:
             self.content.grid_forget()
         self.content = frame
         self.content.grid(sticky="nsew", row=1, column=1, columnspan=2)
+
+    def vitoPuzzleOrModeChange(self, _):
+        if solver.state.view.value() == None:
+            return False
+        return not PuzzleSaver(solver.state.view.value()).check(self)
 
     def onViewChange(self, view):
         frame = (
