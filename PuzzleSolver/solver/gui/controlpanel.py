@@ -5,6 +5,7 @@ Contains the control panel for loading/saving puzzles etc.
 
 import tkinter
 
+from . puzzlesaver import PuzzleSaver
 import solver.state
 
 class ControlPanel(tkinter.Frame):
@@ -26,12 +27,17 @@ class ControlPanel(tkinter.Frame):
         solver.state.puzzle.onChange(self.puzzleChosen)
 
     def clean(self):
-        solver.state.solver.change(False)
+        if solver.state.solving.change(False):
+            if PuzzleSaver(solver.state.view.value()).check(self):
+                solver.state.view.value().clean()
 
     def save(self):
-        pass
+        PuzzleSaver(solver.state.view.value()).save(self)
+
     def load(self):
-        solver.state.solver.change(False)
+        if solver.state.solving.change(False):
+            if PuzzleSaver(solver.state.view.value()).check(self):
+                PuzzleSaver(solver.state.view.value()).load(self)
 
     def puzzleChosen(self, puzzle):
         state = tkinter.NORMAL if puzzle != None else tkinter.DISABLED
