@@ -60,3 +60,10 @@ class ConcreteView(solver.plugin.PuzzleView):
 
     def saved(self):
         """Reset changed."""
+
+    def clean(self):
+        """Clean the view, removing all user changes."""
+
+    def load(self, puzzle):
+        """Load the given puzzle if possible and return if successful."""
+        return True

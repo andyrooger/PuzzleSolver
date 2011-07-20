@@ -48,6 +48,14 @@ class PuzzleView(metaclass=abc.ABCMeta):
     def saved(self):
         """Reset changed."""
 
+    @abc.abstractmethod
+    def clean(self):
+        """Clean the view, removing all user changes."""
+
+    @abc.abstractmethod
+    def load(self, puzzle):
+        """Load the given puzzle if possible and return if successful."""
+
 def find_plugins(module):
     """Find all plugin names for the given package."""
 
