@@ -16,7 +16,7 @@ class PuzzleType(metaclass=abc.ABCMeta):
     def get(self, mode):
         """Get the a new puzzle pane for the given mode."""
 
-class PuzzlePane(metaclass=abc.ABCMeta):
+class PuzzleView(metaclass=abc.ABCMeta):
     """Functionality for a single mode."""
 
     @abc.abstractmethod
@@ -24,5 +24,9 @@ class PuzzlePane(metaclass=abc.ABCMeta):
         """Get the GUI frame."""
 
     @abc.abstractmethod
-    def start(self):
-        """Get the GUI frame."""
+    def canSolve(self):
+        """Can we solve puzzles in this view."""
+
+    @abc.abstractmethod
+    def getSolver(self):
+        """Get the solver for this view if one exists."""

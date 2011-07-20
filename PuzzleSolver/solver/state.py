@@ -45,6 +45,7 @@ class WatchedValue:
 puzzle = WatchedValue(None)
 mode = WatchedValue(None, "CREATE", "PLAY")
 quitting = WatchedValue(False, True, False)
+solving = WatchedValue(False, True, False)
 
 view = WatchedValue(None)
 
@@ -57,3 +58,4 @@ def update_view(p, m):
 
 puzzle.onChange(update_puzzle)
 mode.onChange(update_mode)
+

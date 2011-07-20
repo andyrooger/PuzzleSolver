@@ -30,7 +30,6 @@ class SolverGUI(tkinter.Frame):
         mdChoice.grid(sticky="nwe", row=0, column=0, columnspan=2)
 
         slv = SolverButton(self)
-        slv.setEnabled(False)
         slv.grid(sticky="nwe", row=0, column=2)
 
         self.content = None
@@ -61,6 +60,8 @@ def start_gui(pluginmodule):
             class Dummy2:
                 def getFrame(self, master):
                     return tkinter.Label(master, text="Hello I am " + str(upper.i) + " and my mode is " + mode)
+                def canSolve(self):
+                    return upper.i==3
             return Dummy2()
     solver.state.puzzle.allowable = [Dummy(a) for a in range(10)] + [None]
 

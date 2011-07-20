@@ -26,13 +26,12 @@ class ControlPanel(tkinter.Frame):
         solver.state.puzzle.onChange(self.puzzleChosen)
 
     def clean(self):
-        pass
+        solver.state.solver.change(False)
 
     def save(self):
         pass
-
     def load(self):
-        pass
+        solver.state.solver.change(False)
 
     def puzzleChosen(self, puzzle):
         state = tkinter.NORMAL if puzzle != None else tkinter.DISABLED
