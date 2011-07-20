@@ -5,6 +5,7 @@ Contains the main window for the puzzle solver.
 
 import tkinter
 
+import solver.plugin
 import solver.state
 
 from . controlpanel import ControlPanel
@@ -50,20 +51,9 @@ class SolverGUI(tkinter.Frame):
         self.setContent(frame)
 
 def start_gui(pluginmodule):
-    class Dummy:
-        def __init__(self, i):
-            self.i = i
-        def name(self):
-            return "Lala " + str(self.i)
-        def get(self, mode):
-            upper = self
-            class Dummy2:
-                def getFrame(self, master):
-                    return tkinter.Label(master, text="Hello I am " + str(upper.i) + " and my mode is " + mode)
-                def canSolve(self):
-                    return upper.i==3
-            return Dummy2()
-    solver.state.puzzle.allowable = [Dummy(a) for a in range(10)] + [None]
+    solver.state.puzzle.allowable = solver.plugin.load_plugins(pluginmodule)
+    solver.state.puzzle.allowable = [P() for P in solver.state.puzzle.allowable for i in range(10)]
+    solver.state.puzzle.allowable += [None]
 
     APP_TITLE = "Puzzle Solver"
 
