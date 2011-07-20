@@ -59,4 +59,27 @@ class PuzzleSaver:
         return True
 
     def load(self, master):
-        pass
+        ext = self.view.getExtension()
+        if ext == None:
+            messagebox.showinfo("Whoops", "Sorry, this puzzle type is not loadable.")
+            return False
+        filename = filedialog.askopenfilename(
+            defaultextension = ext,
+            filetypes = [(solver.state.puzzle.value().name() + " file", ext)],
+            parent = master)
+        if not filename:
+            return False
+        if not filename.endswith(ext):
+            filename += ext
+
+        try:
+            with open(filename, "rb") as file:
+                puzzle = pickle.load(file)
+        except pickle.PickleError:
+            messagebox.showwarning("Whoops", "The file was corrupted or of an unreadable format.")
+            return False
+        except IOError:
+            messagebox.showwarning("Whoops", "The file could not be read.")
+            return False
+            
+        return self.view.load(puzzle)
