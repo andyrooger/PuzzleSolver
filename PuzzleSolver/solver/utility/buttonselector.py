@@ -27,22 +27,22 @@ class ButtonSelector(tkinter.Frame):
                 b.config(relief=tkinter.SUNKEN)
             else:
                 b.config(relief=tkinter.RAISED)
-        self._selected = item
 
     def selection(self, select=None):
         """Get selection or force change."""
 
         if select != None:
-            self._selected = select
             self._select(select)
+            self._selected = select
 
         return self._selected
 
     def add(self, text, item):
         def callback():
+            self._select(item)
             if self.cb_selected and self.selection() is not item:
                 self.cb_selected(item)
-            self._select(item)
+            self._selection = item
 
         dims = self.grid_size()
         dims = dims[1] if self.vertical else dims[0]
