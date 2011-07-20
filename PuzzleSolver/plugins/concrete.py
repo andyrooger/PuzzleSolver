@@ -52,7 +52,7 @@ class ConcreteView(solver.plugin.PuzzleView):
 
     def getPuzzle(self):
         """Get either the puzzle object if it can be saved, or None."""
-        return None
+        return True
 
     def changed(self):
         """Was the puzzle changed since the last call to save."""
