@@ -41,6 +41,7 @@ class SolverGUI(tkinter.Frame):
 
         solver.state.mode.vitoChange(self.vitoPuzzleOrModeChange)
         solver.state.puzzle.vitoChange(self.vitoPuzzleOrModeChange)
+        solver.state.quitting.vitoChange(self.vitoQuitting)
 
     def setContent(self, frame):
         if self.content != None:
@@ -52,6 +53,11 @@ class SolverGUI(tkinter.Frame):
         if solver.state.view.value() == None:
             return False
         return not PuzzleSaver(solver.state.view.value()).check(self)
+
+    def vitoQuitting(self, quitting):
+        if quitting and solver.state.view.value() != None:
+            return not PuzzleSaver(solver.state.view.value()).check(self)
+        return False
 
     def onViewChange(self, view):
         frame = (
