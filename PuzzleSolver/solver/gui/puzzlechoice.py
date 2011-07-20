@@ -30,6 +30,8 @@ class PuzzleChoice(tkinter.Frame):
         if solver.state.puzzle.change(None):
             solver.state.mode.change("CREATE")
             solver.state.puzzle.change(puzzle)
+        else:
+            self.selector.selection(solver.state.puzzle.value())
 
     def setSelected(self, puzzle):
         self.selector.selection(puzzle)

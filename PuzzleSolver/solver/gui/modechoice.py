@@ -32,4 +32,5 @@ class ModeChoice(tkinter.Frame):
         self.selector.selection(mode)
 
     def changeMode(self, mode):
-        solver.state.mode.change(mode)
+        if not solver.state.mode.change(mode):
+            self.selector.selection(solver.state.mode.value())
