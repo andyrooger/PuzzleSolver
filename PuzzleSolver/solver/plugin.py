@@ -33,6 +33,10 @@ class PuzzleView(metaclass=abc.ABCMeta):
         """Get the solver for this view if one exists."""
 
     @abc.abstractmethod
+    def getExtension(self):
+        """Get either the file extension used to save the puzzles below, or None"""
+
+    @abc.abstractmethod
     def getPuzzle(self):
         """Get either the puzzle object if it can be saved, or None."""
 
