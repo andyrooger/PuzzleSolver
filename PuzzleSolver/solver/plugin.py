@@ -64,4 +64,5 @@ def load_plugins(module):
         return []
     else:
         m = __import__(module.__name__, globals(), locals(), fromlist=plugins)
-        return [getattr(m, p, None) for p in plugins if p != None]
+        mods = (getattr(m, p, None) for p in plugins)
+        return [getattr(m, "Puzzle") for m in mods if hasattr(m, "Puzzle")]
