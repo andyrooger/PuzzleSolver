@@ -4,6 +4,7 @@ Various base classes for plugins.
 """
 
 import abc
+import os
 
 class PuzzleType(metaclass=abc.ABCMeta):
     """Entire plugin."""
@@ -30,3 +31,37 @@ class PuzzleView(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def getSolver(self):
         """Get the solver for this view if one exists."""
+
+    @abc.abstractmethod
+    def getPuzzle(self):
+        """Get either the puzzle object if it can be saved, or None."""
+
+    @abc.abstractmethod
+    def changed(self):
+        """Was the puzzle changed since the last call to save."""
+
+    @abc.abstractmethod
+    def saved(self):
+        """Reset changed."""
+
+def find_plugins(module):
+    """Find all plugin names for the given package."""
+
+    mod_names = set()
+    for path in module.__path__:
+        if os.path.isdir(path):
+            mod_files = os.listdir(path)
+            for file in mod_files:
+                if file.endswith(".py") and file != "__init__.py":
+                    mod_names.add(file[:-3])
+    return mod_names
+
+def load_plugins(module):
+    """Load all the plugins inside module."""
+
+    plugins = list(find_plugins(module))
+    if not plugins:
+        return []
+    else:
+        m = __import__(module.__name__, globals(), locals(), fromlist=plugins)
+        return [getattr(m, p, None) for p in plugins if p != None]
