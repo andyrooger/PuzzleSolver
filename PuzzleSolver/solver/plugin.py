@@ -57,6 +57,18 @@ class PuzzleView(metaclass=abc.ABCMeta):
     def load(self, puzzle):
         """Load the given puzzle if possible and return if successful."""
 
+class Solver(metaclass=abc.ABCMeta):
+    """Functionality for a puzzle solver, changed will be performed on the underlying view."""
+
+    @abc.abstractmethod
+    def start(self):
+        """Start the solver."""
+
+    @abc.abstractmethod
+    def stop(self):
+        """Stop the solver and return success (in stopping)."""
+
+
 def find_plugins(module):
     """Find all plugin names for the given package."""
 

@@ -61,7 +61,7 @@ class WatchedValue:
 puzzle = WatchedValue(None)
 mode = WatchedValue(None, "CREATE", "PLAY")
 quitting = WatchedValue(None)
-solving = WatchedValue(False, True, False)
+solving = WatchedValue(None) # Holds current solver or None
 wiping = WatchedValue(None) # Wiping puzzle info
 
 view = WatchedValue(plugin.DummyView())

@@ -44,7 +44,7 @@ class ConcreteView(solver.plugin.PuzzleView):
 
     def getSolver(self):
         """Get the solver for this view if one exists."""
-        return None
+        return ConcreteSolver() if self.i == 3 else None
 
     def getExtension(self):
         """Get either the file extension used to save the puzzles below, or None."""
@@ -66,4 +66,18 @@ class ConcreteView(solver.plugin.PuzzleView):
 
     def load(self, puzzle):
         """Load the given puzzle if possible and return if successful."""
+        return True
+
+class ConcreteSolver(solver.plugin.Solver):
+    """Functionality for a puzzle solver, changed will be performed on the underlying view."""
+
+    def start(self):
+        """Start the solver."""
+
+        print("Solving...")
+
+    def stop(self):
+        """Stop the solver and return success (in stopping)."""
+
+        print("Done.")
         return True
