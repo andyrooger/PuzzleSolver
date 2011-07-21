@@ -13,8 +13,8 @@ from tkinter import filedialog
 class PuzzleSaver:
     """Allows saving/loading and querying of puzzles."""
 
-    def __init__(self, view):
-        self.view = view
+    def __init__(self):
+        self.view = solver.state.view.value()
 
     def check(self, master):
         if not self.view.changed():

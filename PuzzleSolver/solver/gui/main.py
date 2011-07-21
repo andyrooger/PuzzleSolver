@@ -59,7 +59,7 @@ class SolverGUI(tkinter.Frame):
     def vitoWiping(self, _):
         if solver.state.view.value() == None:
             return False
-        return not PuzzleSaver(solver.state.view.value()).check(self)
+        return not PuzzleSaver().check(self)
 
     def onViewChange(self, view):
         frame = (

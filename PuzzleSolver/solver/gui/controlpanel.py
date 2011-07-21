@@ -31,11 +31,11 @@ class ControlPanel(tkinter.Frame):
             solver.state.view.value().clean()
 
     def save(self):
-        PuzzleSaver(solver.state.view.value()).save(self)
+        PuzzleSaver().save(self)
 
     def load(self):
         if solver.state.wiping.change(None):
-            PuzzleSaver(solver.state.view.value()).load(self)
+            PuzzleSaver().load(self)
 
     def puzzleChosen(self, puzzle):
         state = tkinter.NORMAL if puzzle != None else tkinter.DISABLED
