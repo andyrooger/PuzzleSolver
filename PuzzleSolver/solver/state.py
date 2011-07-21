@@ -46,6 +46,7 @@ puzzle = WatchedValue(None)
 mode = WatchedValue(None, "CREATE", "PLAY")
 quitting = WatchedValue(False, True, False)
 solving = WatchedValue(False, True, False)
+wiping = WatchedValue(None, None) # Wiping puzzle info
 
 view = WatchedValue(None)
 

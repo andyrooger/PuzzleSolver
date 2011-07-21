@@ -23,9 +23,7 @@ class SolverButton(tkinter.Frame):
 
         solver.state.view.onChange(self.viewChanged)
         solver.state.solving.onChange(self.solvingChanged)
-        solver.state.quitting.vitoChange(self.vitoQuitting)
-        solver.state.puzzle.vitoChange(self.vitoPuzzle)
-        solver.state.mode.vitoChange(self.vitoMode)
+        solver.state.vitoWiping(self.vitoWipe)
 
     def toggle(self):
         solver.state.solving.change(not solver.state.solving.value())
@@ -46,13 +44,5 @@ class SolverButton(tkinter.Frame):
     def solvingChanged(self, solving):
         self.pressed(solving)
 
-    def vitoQuitting(self, quitting):
-        if quitting:
-            return not solver.state.solving.change(False)
-        return False
-
-    def vitoPuzzle(self, puzzle):
-        return not solver.state.solving.change(False)
-
-    def vitoMode(self, mode):
+    def vitoWipe(self, _):
         return not solver.state.solving.change(False)
