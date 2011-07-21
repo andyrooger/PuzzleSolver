@@ -25,6 +25,7 @@ class ControlPanel(tkinter.Frame):
         self.loadBtn.grid(column=2, row=0, sticky="nsew")
 
         solver.state.puzzle.onChange(self.puzzleChosen)
+        solver.state.view.onChange(self.viewChanged)
 
     def clean(self):
         if solver.state.wiping.change(None):
@@ -42,3 +43,8 @@ class ControlPanel(tkinter.Frame):
         self.cleanBtn.configure(state=state)
         self.saveBtn.configure(state=state)
         self.loadBtn.configure(state=state)
+
+    def viewChanged(self, view):
+        puzzle = solver.state.view.value().getPuzzle()
+        if puzzle != None:
+            view.load(puzzle)

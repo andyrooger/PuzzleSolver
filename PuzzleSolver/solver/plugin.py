@@ -5,6 +5,7 @@ Various base classes for plugins.
 
 import abc
 import os
+import tkinter
 
 class PuzzleType(metaclass=abc.ABCMeta):
     """Entire plugin."""
@@ -78,3 +79,25 @@ def load_plugins(module):
         m = __import__(module.__name__, globals(), locals(), fromlist=plugins)
         mods = (getattr(m, p, None) for p in plugins)
         return [getattr(m, "Puzzle") for m in mods if hasattr(m, "Puzzle")]
+
+class DummyView(PuzzleView):
+    """Functionality for a single mode."""
+
+    def __init__(self):
+        PuzzleView.__init__(self)
+        self.puzzle = None
+
+    def getFrame(self, master):
+        return tkinter.Label(master, text="No puzzle type is currently selected.")
+
+    def canSolve(self): return False
+    def getSolver(self): return None
+    def getExtension(self): return None
+    def getPuzzle(self): return self.puzzle
+    def changed(self): return False
+    def saved(self): pass
+    def clean(self): self.puzzle = None
+
+    def load(self, puzzle):
+        self.puzzle = puzzle
+        return True

@@ -20,7 +20,7 @@ class ViewFrame(tkinter.Frame):
         self.content = None
 
         solver.state.view.onChange(self.onViewChange)
-        solver.state.view.change(None)
+        solver.state.puzzle.change(None)
 
         solver.state.mode.vitoChange(self.vitoPuzzleOrModeChange)
         solver.state.puzzle.vitoChange(self.vitoPuzzleOrModeChange)
@@ -40,8 +40,6 @@ class ViewFrame(tkinter.Frame):
         return quitting and not solver.state.wiping.change(None)
 
     def vitoWiping(self, _):
-        if solver.state.view.value() == None:
-            return False
         return not PuzzleSaver().check(self)
 
     def onViewChange(self, view):

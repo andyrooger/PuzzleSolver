@@ -5,11 +5,13 @@ Sorry for globals, these are needed for access by the entire program.
 
 """
 
+from . import plugin
+
 class WatchedValue:
     """Keeps track of an updateable value."""
 
     def __init__(self, default, *allowable):
-        self._value = None
+        self._value = default
         self._callbacks = set()
         self._vitos = set()
         self.allowable = allowable if allowable else None
@@ -48,15 +50,14 @@ quitting = WatchedValue(False, True, False)
 solving = WatchedValue(False, True, False)
 wiping = WatchedValue(None, None) # Wiping puzzle info
 
-view = WatchedValue(None)
+view = WatchedValue(plugin.DummyView())
 
 def update_puzzle(p):
     update_view(p, mode.value())
 def update_mode(m):
     update_view(puzzle.value(), m)
 def update_view(p, m):
-    view.change(None if p == None or m == None else p.get(m))
+    view.change(plugin.DummyView() if p == None or m == None else p.get(m))
 
 puzzle.onChange(update_puzzle)
 mode.onChange(update_mode)
-
