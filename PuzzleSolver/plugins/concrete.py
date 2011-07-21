@@ -1,5 +1,5 @@
 """
-Various base classes for plugins.
+Concrete implementation of a plugin as an example.
 
 """
 
@@ -87,6 +87,7 @@ class ConcreteView(solver.plugin.PuzzleView):
     def load(self, puzzle):
         """Load the given puzzle if possible and return if successful."""
         self.changeValue(str(puzzle), False)
+        return True
 
 class ConcreteSolver(solver.plugin.Solver):
     """Functionality for a puzzle solver, changed will be performed on the underlying view."""
