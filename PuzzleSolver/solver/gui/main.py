@@ -49,13 +49,7 @@ def start_gui(pluginmodule):
     root = tkinter.Tk()
     root.title(APP_TITLE)
 
-    def try_quit():
-        solver.state.quitting.change(True)
-
-    def do_quit(quitting):
-        if quitting:
-            root.destroy()
-    solver.state.quitting.onChange(do_quit)
+    solver.state.quitting.onChange(lambda _: root.destroy())
 
     def puzzle_change(n_puz):
         if n_puz == None:
@@ -64,7 +58,7 @@ def start_gui(pluginmodule):
             root.title(APP_TITLE + " - " + n_puz.name().title())
     solver.state.puzzle.onChange(puzzle_change)
 
-    root.protocol("WM_DELETE_WINDOW", try_quit)
+    root.protocol("WM_DELETE_WINDOW", solver.state.quitting.attempt)
     appwin = SolverGUI(root)
     appwin.pack(expand=True, fill=tkinter.BOTH)
     appwin.mainloop()

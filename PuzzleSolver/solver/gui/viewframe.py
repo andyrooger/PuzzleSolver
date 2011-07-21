@@ -34,10 +34,10 @@ class ViewFrame(tkinter.Frame):
         self.content.grid(sticky="nsew")
 
     def vitoPuzzleOrModeChange(self, _):
-        return not solver.state.wiping.change(None)
+        return not solver.state.wiping.attempt()
 
-    def vitoQuitting(self, quitting):
-        return quitting and not solver.state.wiping.change(None)
+    def vitoQuitting(self, _):
+        return not solver.state.wiping.attempt()
 
     def vitoWiping(self, _):
         return not PuzzleSaver().check(self)

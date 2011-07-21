@@ -28,14 +28,14 @@ class ControlPanel(tkinter.Frame):
         solver.state.view.onChange(self.viewChanged)
 
     def clean(self):
-        if solver.state.wiping.change(None):
+        if solver.state.wiping.attempt():
             solver.state.view.value().clean()
 
     def save(self):
         PuzzleSaver().save(self)
 
     def load(self):
-        if solver.state.wiping.change(None):
+        if solver.state.wiping.attempt():
             PuzzleSaver().load(self)
 
     def puzzleChosen(self, puzzle):

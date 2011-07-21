@@ -28,9 +28,12 @@ class WatchedValue:
         self._vitos.add(callback)
         
     def value(self):
+        """Get the current value for this variable."""
+
         return self._value
 
     def change(self, to):
+        """Try to change the variable and return whether successfull."""
         if self.allowable != None and to not in self.allowable:
             return False
 
@@ -42,13 +45,24 @@ class WatchedValue:
         self._value = to
         return True
 
+    def attempt(self):
+        """
+        Change the variable to default.
+
+        This can be used when we do not care about the actual value, just
+        whether it can be changed.
+
+        """
+
+        return self.change(self.default)
+
 # GLOBAL STATE VARIABLES
 
 puzzle = WatchedValue(None)
 mode = WatchedValue(None, "CREATE", "PLAY")
-quitting = WatchedValue(False, True, False)
+quitting = WatchedValue(None)
 solving = WatchedValue(False, True, False)
-wiping = WatchedValue(None, None) # Wiping puzzle info
+wiping = WatchedValue(None) # Wiping puzzle info
 
 view = WatchedValue(plugin.DummyView())
 
