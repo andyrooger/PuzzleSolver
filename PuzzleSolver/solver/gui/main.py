@@ -12,6 +12,7 @@ from . controlpanel import ControlPanel
 from . puzzlechoice import PuzzleChoice
 from . modechoice import ModeChoice
 from . solverbutton import SolverButton
+from . viewframe import ViewFrame
 from . puzzlesaver import PuzzleSaver
 
 class SolverGUI(tkinter.Frame):
@@ -34,38 +35,9 @@ class SolverGUI(tkinter.Frame):
         slv = SolverButton(self)
         slv.grid(sticky="nwe", row=0, column=2)
 
-        self.content = None
+        vw = ViewFrame(self)
+        vw.grid(sticky="nsew", row=1, column=1, columnspan=2)
 
-        solver.state.view.onChange(self.onViewChange)
-        solver.state.puzzle.change(None)
-
-        solver.state.mode.vitoChange(self.vitoPuzzleOrModeChange)
-        solver.state.puzzle.vitoChange(self.vitoPuzzleOrModeChange)
-        solver.state.quitting.vitoChange(self.vitoQuitting)
-        solver.state.wiping.vitoChange(self.vitoWiping)
-
-    def setContent(self, frame):
-        if self.content != None:
-            self.content.grid_forget()
-        self.content = frame
-        self.content.grid(sticky="nsew", row=1, column=1, columnspan=2)
-
-    def vitoPuzzleOrModeChange(self, _):
-        return not solver.state.wiping.change(None)
-
-    def vitoQuitting(self, quitting):
-        return quitting and not solver.state.wiping.change(None)
-
-    def vitoWiping(self, _):
-        if solver.state.view.value() == None:
-            return False
-        return not PuzzleSaver().check(self)
-
-    def onViewChange(self, view):
-        frame = (
-            tkinter.Label(self, text="No puzzle type is currently selected.")
-            if view == None else view.getFrame(self))
-        self.setContent(frame)
 
 def start_gui(pluginmodule):
     solver.state.puzzle.allowable = solver.plugin.load_plugins(pluginmodule)
