@@ -33,10 +33,22 @@ class ConcreteView(solver.plugin.PuzzleView):
         solver.plugin.PuzzleView.__init__(self)
         self.mode = mode
         self.i = i
+        self.data = tkinter.StringVar()
+        self.changeValue("", False)
+
+    def changeValue(self, text, needssaving=True):
+        self.data.set(text)
+        if not needssaving:
+            self.oldval = text
 
     def getFrame(self, master):
         """Get the GUI frame."""
-        return tkinter.Label(master, text="Hello I am " + str(self.i) + " and my mode is " + self.mode)
+        fr = tkinter.Frame(master)
+        fr.grid_rowconfigure(0, weight=1)
+        fr.grid_columnconfigure(0, weight=1)
+        tkinter.Label(fr, text="Hello I am " + str(self.i) + " and my mode is " + self.mode).grid(row=0, column=0, sticky="nsew")
+        tkinter.Entry(fr, textvariable=self.data).grid(row=1, column=0, sticky="sew")
+        return fr
 
     def canSolve(self):
         """Can we solve puzzles in this view."""
@@ -52,21 +64,23 @@ class ConcreteView(solver.plugin.PuzzleView):
 
     def getPuzzle(self):
         """Get either the puzzle object if it can be saved, or None."""
-        return True
+        return self.data.get()
 
     def changed(self):
         """Was the puzzle changed since the last call to save."""
-        return self.i == 4
+        return self.data.get() != self.oldval
 
     def saved(self):
         """Reset changed."""
+        self.oldval = self.data.get()
 
     def clean(self):
         """Clean the view, removing all user changes."""
+        self.changeValue("")
 
     def load(self, puzzle):
         """Load the given puzzle if possible and return if successful."""
-        return True
+        self.changeValue(str(puzzle), False)
 
 class ConcreteSolver(solver.plugin.Solver):
     """Functionality for a puzzle solver, changed will be performed on the underlying view."""
