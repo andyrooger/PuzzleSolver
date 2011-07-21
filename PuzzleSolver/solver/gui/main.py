@@ -23,7 +23,6 @@ Contains the main window for the puzzle solver.
 
 import tkinter
 
-import solver.plugin
 import solver.state
 
 from . controlpanel import ControlPanel
@@ -57,11 +56,7 @@ class SolverGUI(tkinter.Frame):
         vw.grid(sticky="nsew", row=1, column=1, columnspan=2)
 
 
-def start_gui(pluginmodule):
-    solver.state.puzzle.allowable = solver.plugin.load_plugins(pluginmodule)
-    solver.state.puzzle.allowable = [P() for P in solver.state.puzzle.allowable for i in range(10)]
-    solver.state.puzzle.allowable += [None]
-
+def start_gui():
     APP_TITLE = "Puzzle Solver"
 
     root = tkinter.Tk()
