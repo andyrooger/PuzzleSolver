@@ -23,7 +23,7 @@ class SolverButton(tkinter.Frame):
 
         solver.state.view.onChange(self.viewChanged)
         solver.state.solving.onChange(self.solvingChanged)
-        solver.state.vitoWiping(self.vitoWipe)
+        solver.state.wiping.vitoChange(self.vitoWipe)
 
     def toggle(self):
         solver.state.solving.change(not solver.state.solving.value())
