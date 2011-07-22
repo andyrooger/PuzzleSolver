@@ -19,7 +19,8 @@ class ViewFrame(tkinter.Frame):
 
         self.content = None
 
-        solver.state.view.onChange(self.onViewChange)
+        # Should always happen first so vito is a hack
+        solver.state.view.vitoChange(self.onViewChange)
         solver.state.puzzle.change(None)
 
         solver.state.mode.vitoChange(self.vitoPuzzleOrModeChange)
@@ -47,4 +48,4 @@ class ViewFrame(tkinter.Frame):
             tkinter.Label(self, text="No puzzle type is currently selected.")
             if view == None else view.getFrame(self))
         self.setContent(frame)
-
+        return False # do not vito, EVER!
