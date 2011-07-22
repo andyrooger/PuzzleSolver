@@ -6,6 +6,7 @@ View for Push Puzzle creation.
 import tkinter
 
 import solver.plugin
+from solver.utility.simpleframe import SimpleFrame
 
 class CreateView(solver.plugin.PuzzleView):
     """Functionality for Push Puzzle creation."""
@@ -28,20 +29,11 @@ class CreateView(solver.plugin.PuzzleView):
     def clean(self): return self.frame.clean()
     def load(self, puzzle): return self.frame.load(puzzle)
 
-class CreateFrame(tkinter.Frame):
+class CreateFrame(SimpleFrame):
     """GUI for the creation view."""
 
     def __init__(self, master):
-        tkinter.Frame.__init__(self, master)
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.content = None
-
-    def setContent(self, content):
-        if self.content != None:
-            self.content.grid_forget()
-        self.content = content
-        self.content.grid(sticky="nsew", row=0, column=0)
+        SimpleFrame.__init__(self, master)
 
     def clean(self): pass
     def load(self, puzzle): return True

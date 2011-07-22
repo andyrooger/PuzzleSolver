@@ -25,17 +25,14 @@ import tkinter
 
 import solver.state
 
+from solver.utility.simpleframe import SimpleFrame
 from . puzzlesaver import PuzzleSaver
 
-class ViewFrame(tkinter.Frame):
+class ViewFrame(SimpleFrame):
     """Frame to contain current view."""
 
     def __init__(self, master):
-        tkinter.Frame.__init__(self, master)
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        self.content = None
+        SimpleFrame.__init__(self, master)
 
         # Should always happen first so vito is a hack
         solver.state.view.vitoChange(self.onViewChange)
@@ -45,12 +42,6 @@ class ViewFrame(tkinter.Frame):
         solver.state.puzzle.vitoChange(self.vitoPuzzleOrModeChange)
         solver.state.quitting.vitoChange(self.vitoQuitting)
         solver.state.wiping.vitoChange(self.vitoWiping)
-
-    def setContent(self, frame):
-        if self.content != None:
-            self.content.grid_forget()
-        self.content = frame
-        self.content.grid(sticky="nsew")
 
     def vitoPuzzleOrModeChange(self, _):
         return not solver.state.wiping.attempt()
