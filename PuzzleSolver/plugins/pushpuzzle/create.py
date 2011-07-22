@@ -35,7 +35,13 @@ class CreateFrame(tkinter.Frame):
         tkinter.Frame.__init__(self, master)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        tkinter.Label(self, text="create frame").grid(stick="nsew")
+        self.content = None
+
+    def setContent(self, content):
+        if self.content != None:
+            self.content.grid_forget()
+        self.content = content
+        self.content.grid(sticky="nsew", row=0, column=0)
 
     def clean(self): pass
     def load(self, puzzle): return True
