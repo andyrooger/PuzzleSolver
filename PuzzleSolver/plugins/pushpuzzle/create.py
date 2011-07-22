@@ -34,9 +34,51 @@ class CreateFrame(SimpleFrame):
 
     def __init__(self, master):
         SimpleFrame.__init__(self, master)
+        self.clean()
 
-    def clean(self): pass
-    def load(self, puzzle): return True
+    def showingEditor(self):
+        return isinstance(self.content, PuzzleEditor)
+
+    def clean(self):
+        self.setContent(DimensionChooser(self))
+
+    def load(self, puzzle):
+        try:
+            puz = PuzzleEditor(self, puzzle)
+        except ValueError:
+            return False
+        else:
+            self.setContent(puz)
+            return True
+
+    def getPuzzle(self):
+        if self.showingEditor():
+            return self.content.getPuzzle()
+        else:
+            return None
+
+    def saved(self):
+        if self.showingEditor():
+            self.content.saved()
+
+    def changed(self):
+        if self.showingEditor():
+            return self.content.changed()
+        else:
+            return False
+
+class DimensionChooser(tkinter.Frame):
+    def __init__(self, master):
+        tkinter.Frame.__init__(self, master)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        tkinter.Label(self, text="dimchoice").grid(sticky="nsew")
+
+class PuzzleEditor(tkinter.Frame):
+    def __init__(self, master, puzzle):
+        tkinter.Frame.__init__(self, master)
+        tkinter.Label(self, text="puzzleedit").grid(sticky="nsew")
+
     def getPuzzle(self): return None
     def saved(self): pass
     def changed(self): return False
