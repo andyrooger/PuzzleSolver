@@ -68,14 +68,43 @@ class CreateFrame(SimpleFrame):
             return False
 
 class DimensionChooser(tkinter.Frame):
-    def __init__(self, master):
+    def __init__(self, master, callback=(lambda x, y: None)):
         tkinter.Frame.__init__(self, master)
+        self.callback = callback
+
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        tkinter.Label(self, text="dimchoice").grid(sticky="nsew")
+        centred = tkinter.Frame(self)
+        centred.grid_columnconfigure(0, weight=1)
+
+        tkinter.Label(centred, text="Please choose the dimensions for your new puzzle.").grid(
+            sticky="nsew", row=0, column=0, columnspan=2)
+
+        self.rows = tkinter.IntVar()
+        self.columns = tkinter.IntVar()
+        scale_info = {"from_": 1, "to": 50, "orient": tkinter.HORIZONTAL}
+
+        tkinter.Scale(centred, label="Rows", variable=self.rows, **scale_info).grid(
+            sticky="nsew", row=1, column=0)
+        tkinter.Entry(centred, textvariable=self.rows, width=2).grid(
+            sticky="sew", row=1, column=1)
+
+        tkinter.Scale(centred, label="Columns", variable=self.columns, **scale_info).grid(
+            sticky="nsew", row=2, column=0)
+        tkinter.Entry(centred, textvariable=self.columns, width=2).grid(
+            sticky="sew", row=2, column=1)
+
+        tkinter.Button(centred, text="Create", command=self.click).grid(
+            row=3, column=0, columnspan=2)
+
+        centred.grid()
+
+    def click(self):
+        self.callback(self.rows, self.columns)
 
 class PuzzleEditor(tkinter.Frame):
     def __init__(self, master, puzzle):
+        raise ValueError # Puzzle is broken
         tkinter.Frame.__init__(self, master)
         tkinter.Label(self, text="puzzleedit").grid(sticky="nsew")
 
