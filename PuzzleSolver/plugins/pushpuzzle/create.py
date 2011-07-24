@@ -8,6 +8,9 @@ import tkinter
 import solver.plugin
 from solver.utility.simpleframe import SimpleFrame
 
+from . puzzle import Puzzle
+
+
 class CreateView(solver.plugin.PuzzleView):
     """Functionality for Push Puzzle creation."""
 
@@ -40,7 +43,9 @@ class CreateFrame(SimpleFrame):
         return isinstance(self.content, PuzzleEditor)
 
     def clean(self):
-        self.setContent(DimensionChooser(self))
+        def puzzle_create(r, c):
+            self.setContent(PuzzleEditor(self, Puzzle(r, c)))
+        self.setContent(DimensionChooser(self, puzzle_create))
 
     def load(self, puzzle):
         try:
@@ -68,7 +73,7 @@ class CreateFrame(SimpleFrame):
             return False
 
 class DimensionChooser(tkinter.Frame):
-    def __init__(self, master, callback=(lambda x, y: None)):
+    def __init__(self, master, callback=(lambda r, c: None)):
         tkinter.Frame.__init__(self, master)
         self.callback = callback
 
@@ -100,13 +105,16 @@ class DimensionChooser(tkinter.Frame):
         centred.grid()
 
     def click(self):
-        self.callback(self.rows, self.columns)
+        self.callback(self.rows.get(), self.columns.get())
 
 class PuzzleEditor(tkinter.Frame):
     def __init__(self, master, puzzle):
-        raise ValueError # Puzzle is broken
+        if not isinstance(puzzle, Puzzle):
+            raise ValueError # Puzzle is broken
         tkinter.Frame.__init__(self, master)
         tkinter.Label(self, text="puzzleedit").grid(sticky="nsew")
+        tkinter.Label(self, text="Height: "+str(puzzle.height)).grid(sticky="nsew")
+        tkinter.Label(self, text="Width: "+str(puzzle.width)).grid(sticky="nsew")
 
     def getPuzzle(self): return None
     def saved(self): pass
