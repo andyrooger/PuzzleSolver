@@ -42,7 +42,8 @@ class PuzzleEditor(tkinter.Frame):
         }
         self.blank = tkinter.PhotoImage(file=os.path.join(directory, "blank.gif"))
 
-    def getPuzzle(self): return None
+    def getPuzzle(self):
+        return self.creation.getPuzzle()
 
     def saved(self):
         self.creation.saved()
@@ -116,6 +117,9 @@ class CreationArea(tkinter.tix.ScrolledWindow):
             self._changed = True
             if target != None:
                 tile.target(target)
+
+                if target and tile.content() == "WALL":
+                    tile.content("EMPTY")
             if content != None:
                 if self.player == tile.pos and content != "PLAYER":
                     self.player = None
@@ -129,8 +133,22 @@ class CreationArea(tkinter.tix.ScrolledWindow):
 
                 tile.content(content)
 
-                if content == "EMPTY":
+                if content == "EMPTY" or content == "WALL":
                     tile.target(False)
+
+    def getPuzzle(self):
+        p = Puzzle(*reversed(self.grid_size()))
+        for row in self.buttons:
+            for tile in row:
+                if tile.content() == "PLAYER":
+                    p.initial().player = tile.pos
+                elif tile.content() == "BOX":
+                    p.initial().boxes.add(tile.pos)
+                elif tile.content() == "WALL":
+                    p.walls.add(tile.pos)
+                if tile.target():
+                    p.targets.add(tile.pos)
+        return p
 
 class PuzzleTile(tkinter.Button):
     """Single tile in the puzzle."""
