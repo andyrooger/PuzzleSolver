@@ -87,9 +87,9 @@ class DimensionChooser(tkinter.Frame):
             sticky="nsew", row=0, column=0, columnspan=2)
 
         self.rows = tkinter.IntVar()
-        self.rows.set(20)
+        self.rows.set(10)
         self.columns = tkinter.IntVar()
-        self.columns.set(20)
+        self.columns.set(10)
         scale_info = {"from_": 1, "to": 50, "orient": tkinter.HORIZONTAL}
 
         tkinter.Scale(centred, label="Rows", variable=self.rows, **scale_info).grid(
