@@ -43,7 +43,7 @@ class ButtonSelector(tkinter.Frame):
             self._select(item)
             if self.cb_selected and self.selection() is not item:
                 self.cb_selected(item)
-            self._selection = item
+            self._selected = item
 
         dims = self.grid_size()
         dims = dims[1] if self.vertical else dims[0]

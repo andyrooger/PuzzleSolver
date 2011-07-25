@@ -57,11 +57,11 @@ class CreationArea(tkinter.tix.ScrolledWindow):
 
         self.getmode = getmode
         self.buttons = []
-        for x in range(puzzle.width):
+        for y in range(puzzle.height):
             row = []
-            for y in range(puzzle.height):
+            for x in range(puzzle.width):
                 pos = (x, y)
-                p = PuzzleTile(self.window, icons, clicked=self.click)
+                p = PuzzleTile(self.window, pos, icons, clicked=self.click)
                 row.append(p)
                 p.grid(sticky="nsew", row=y, column=x)
             self.buttons.append(row)
@@ -69,6 +69,8 @@ class CreationArea(tkinter.tix.ScrolledWindow):
 
     def setContent(self, puzzle):
         """Tell each tile what their content should be."""
+
+        self.player = puzzle.initial().player
 
         for x,y in puzzle.walls:
             self.buttons[y][x].content("WALL")
@@ -82,16 +84,47 @@ class CreationArea(tkinter.tix.ScrolledWindow):
         except TypeError:
             pass # No player
 
-    def click(self, tile):
+    def click(self, tile, content=None, target=None):
         """On click callback for clicks on PuzzleTiles."""
 
-        pass
+        if content == None and target == None:
+            mode = self.getmode()
+
+            if mode == "EMPTY":
+                self.click(tile, "EMPTY", None)
+            elif mode == "PLAYER":
+                self.click(tile, "PLAYER", None)
+            elif mode == "WALL":
+                self.click(tile, "EMPTY" if tile.content() == "WALL" else "WALL", None)
+            elif mode == "BOX":
+                self.click(tile, "EMPTY" if tile.content() == "BOX" else "BOX", None)
+            elif mode == "TARGET":
+                self.click(tile, None, not tile.target())
+        else:
+            if target != None:
+                tile.target(target)
+            if content != None:
+                if self.player == tile.pos and content != "PLAYER":
+                    self.player = None
+                if content == "PLAYER" and self.player != tile.pos:
+                    try:
+                        x, y = self.player
+                        self.buttons[y][x].content("EMPTY")
+                    except TypeError:
+                        pass # no previous player
+                    self.player = tile.pos
+
+                tile.content(content)
+
+                if content == "EMPTY":
+                    tile.target(False)
 
 class PuzzleTile(tkinter.Button):
     """Single tile in the puzzle."""
 
-    def __init__(self, master, icons, clicked=None):
+    def __init__(self, master, pos, icons, clicked=None):
         tkinter.Button.__init__(self, master, relief="flat", command=self.click)
+        self.pos = pos
         self.icons = icons
         self.clicked = clicked
         # could raise and propagate valueerror
@@ -115,9 +148,13 @@ class PuzzleTile(tkinter.Button):
         """Set up appearance."""
 
         bg = "blue" if self.content() == "WALL" else "white"
+        abg = "darkblue" if self.content() == "WALL" else "gray"
         icon = self.icons.get(self.content(), self.icons["BLANK"])
         hbg = "red" if self.target() else "black"
-        self.config(bg=bg, image=icon, highlightbackground=hbg, highlightthickness=1)
+        self.config(bg=bg, image=icon,
+                    highlightbackground=hbg,
+                    highlightthickness=1,
+                    activebackground=abg)
 
     def click(self):
         self.clicked(self)
