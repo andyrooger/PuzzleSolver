@@ -4,6 +4,7 @@ Toggle button group that works as a radio group.
 """
 
 import tkinter
+from tkinter.tix import Balloon
 
 class ButtonSelector(tkinter.Frame):
     """Frame that allows adding any number of toggle buttons."""
@@ -37,7 +38,7 @@ class ButtonSelector(tkinter.Frame):
 
         return self._selected
 
-    def add(self, text, item):
+    def add(self, text, item, icon=None):
         def callback():
             self._select(item)
             if self.cb_selected and self.selection() is not item:
@@ -46,7 +47,9 @@ class ButtonSelector(tkinter.Frame):
 
         dims = self.grid_size()
         dims = dims[1] if self.vertical else dims[0]
-        btn = tkinter.Button(self, text=text, command=callback)
+        btn = tkinter.Button(self, text=text, image=icon, command=callback)
+        if icon != None:
+            Balloon(self.winfo_toplevel()).bind_widget(btn, msg=text)
         if self.vertical:
             self.grid_rowconfigure(dims, weight=1)
             btn.grid(row=dims, column=0, sticky="nsew")

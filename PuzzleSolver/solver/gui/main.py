@@ -4,6 +4,7 @@ Contains the main window for the puzzle solver.
 """
 
 import tkinter
+import tkinter.tix
 
 import solver.state
 
@@ -41,7 +42,7 @@ class SolverGUI(tkinter.Frame):
 def start_gui():
     APP_TITLE = "Puzzle Solver"
 
-    root = tkinter.Tk()
+    root = tkinter.tix.Tk()
     root.title(APP_TITLE)
 
     solver.state.quitting.onChange(lambda _: root.destroy())
