@@ -24,9 +24,11 @@ class PuzzleEditor(tkinter.Frame):
             self.modeselect.add("Edit " + mode.title(), mode, self.icons[mode])
         self.modeselect.grid(sticky="nsew", row=1, column=0)
 
-        self.creation = CreationArea(self, puzzle, getmode=self.modeselect.selection)
+        creationicons = {"PLAYER": self.icons["PLAYER"],
+                         "BOX": self.icons["BOX"],
+                         "BLANK": self.blank}
+        self.creation = CreationArea(self, puzzle, icons=creationicons, getmode=self.modeselect.selection)
         self.creation.grid(sticky="nsew", row=0, column=0)
-
 
     def loadIcons(self):
         """Load and store all necessary icons."""
@@ -38,6 +40,7 @@ class PuzzleEditor(tkinter.Frame):
             mode: tkinter.PhotoImage(file=os.path.join(directory, mode.lower()+".gif"))
             for mode in EDIT_MODES
         }
+        self.blank = tkinter.PhotoImage(file=os.path.join(directory, "blank.gif"))
 
     def getPuzzle(self): return None
     def saved(self): pass
@@ -46,7 +49,7 @@ class PuzzleEditor(tkinter.Frame):
 class CreationArea(tkinter.tix.ScrolledWindow):
     """Creation area, containing scrolled grid of tiles."""
 
-    def __init__(self, master, puzzle, getmode=None):
+    def __init__(self, master, puzzle, icons=None, getmode=None):
         tkinter.tix.ScrolledWindow.__init__(self, master, scrollbar="auto")
 
         if not isinstance(puzzle, Puzzle):
@@ -58,15 +61,26 @@ class CreationArea(tkinter.tix.ScrolledWindow):
             row = []
             for y in range(puzzle.height):
                 pos = (x, y)
-                p = PuzzleTile(self.window,
-                               wall = (pos in puzzle.walls),
-                               target = (pos in puzzle.targets),
-                               box = (pos in puzzle.initial().boxes),
-                               player = (pos == puzzle.initial().player),
-                               clicked=self.click)
+                p = PuzzleTile(self.window, icons, clicked=self.click)
                 row.append(p)
                 p.grid(sticky="nsew", row=y, column=x)
             self.buttons.append(row)
+        self.setContent(puzzle)
+
+    def setContent(self, puzzle):
+        """Tell each tile what their content should be."""
+
+        for x,y in puzzle.walls:
+            self.buttons[y][x].content("WALL")
+        for x,y in puzzle.targets:
+            self.buttons[y][x].target(True)
+        for x,y in puzzle.initial().boxes:
+            self.buttons[y][x].content("BOX")
+        try:
+            x,y = puzzle.initial().player
+            self.buttons[y][x].content("PLAYER")
+        except TypeError:
+            pass # No player
 
     def click(self, tile):
         """On click callback for clicks on PuzzleTiles."""
@@ -76,31 +90,34 @@ class CreationArea(tkinter.tix.ScrolledWindow):
 class PuzzleTile(tkinter.Button):
     """Single tile in the puzzle."""
 
-    def __init__(self, master, wall=False, target=False, box=False, player=False, clicked=None):
-        tkinter.Button.__init__(self, master, text="x", command=self.click)
+    def __init__(self, master, icons, clicked=None):
+        tkinter.Button.__init__(self, master, relief="flat", command=self.click)
+        self.icons = icons
         self.clicked = clicked
         # could raise and propagate valueerror
-        self._content = self.chooseContent(wall, target, box, player)
+        self.content("EMPTY", noupdate=True)
+        self.target(False, noupdate=True)
+        self.appearance()
 
-    def chooseContent(self, wall, target, box, player):
-        """Decide which of the content we should display."""
+    def target(self, t = None, noupdate=False):
+        if t != None:
+            self._target = t
+            noupdate or self.appearance()
+        return self._target
 
-        if sum(1 for x in [wall, target, box, player] if x) > 1:
-            raise ValueError("Cannot display this puzzle.")
-
-        if wall:
-            return "WALL"
-        elif target:
-            return "TARGET"
-        elif box:
-            return "BOX"
-        elif player:
-            return "PLAYER"
-        else:
-            return "EMPTY"
-
-    def content(self):
+    def content(self, c = None, noupdate=False):
+        if c != None:
+            self._content = c
+            noupdate or self.appearance()
         return self._content
+
+    def appearance(self):
+        """Set up appearance."""
+
+        bg = "blue" if self.content() == "WALL" else "white"
+        icon = self.icons.get(self.content(), self.icons["BLANK"])
+        hbg = "red" if self.target() else "black"
+        self.config(bg=bg, image=icon, highlightbackground=hbg, highlightthickness=1)
 
     def click(self):
         self.clicked(self)
