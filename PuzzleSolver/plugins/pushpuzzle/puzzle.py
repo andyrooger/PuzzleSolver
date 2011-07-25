@@ -12,6 +12,7 @@ class Puzzle:
         self.walls = set()
         self.targets = set()
         self.states = [PuzzleState(self)]
+        self.curstate = 0
 
     def inArea(self, x, y):
         """Are the given coordinates within our range?"""
@@ -38,6 +39,11 @@ class Puzzle:
             return False
 
         return True
+
+    def state(self):
+        """Get the current puzzle state."""
+
+        return self.states[self.curstate]
 
 class PuzzleState:
     """Information on parts of the puzzle that can change during the play."""
