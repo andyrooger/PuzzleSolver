@@ -40,6 +40,11 @@ class Puzzle:
 
         return True
 
+    def initial(self):
+        """Get the initial puzzle state."""
+
+        return self.states[0]
+
     def state(self):
         """Get the current puzzle state."""
 
