@@ -137,7 +137,7 @@ class CreationArea(tkinter.tix.ScrolledWindow):
                     tile.target(False)
 
     def getPuzzle(self):
-        p = Puzzle(*reversed(self.grid_size()))
+        p = Puzzle(*reversed(self.window.grid_size()))
         for row in self.buttons:
             for tile in row:
                 if tile.content() == "PLAYER":
