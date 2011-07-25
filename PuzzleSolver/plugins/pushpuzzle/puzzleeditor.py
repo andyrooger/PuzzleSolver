@@ -5,6 +5,7 @@ Editor frame for push puzzle.
 
 import os.path
 import tkinter
+import tkinter.tix
 
 from . puzzle import Puzzle
 from solver.utility.buttonselector import ButtonSelector
@@ -17,14 +18,18 @@ class PuzzleEditor(tkinter.Frame):
             raise ValueError # Puzzle is broken
 
         tkinter.Frame.__init__(self, master)
-        tkinter.Label(self, text="Height: "+str(puzzle.height)).grid(sticky="nsew")
-        tkinter.Label(self, text="Width: "+str(puzzle.width)).grid(sticky="nsew")
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
         self.loadIcons()
-        ctrl_panel = ButtonSelector(self)
+        self.modeselect = ButtonSelector(self)
         for mode in EDIT_MODES:
-            ctrl_panel.add("Edit " + mode.title(), mode, self.icons[mode])
-        ctrl_panel.grid(sticky="nsew")
+            self.modeselect.add("Edit " + mode.title(), mode, self.icons[mode])
+        self.modeselect.grid(sticky="nsew", row=1, column=0)
+
+        self.creation = CreationArea(self, puzzle.height, puzzle.width, getmode=self.modeselect.selection())
+        self.creation.grid(sticky="nsew", row=0, column=0)
+
 
     def loadIcons(self):
         """Load and store all necessary icons."""
@@ -40,3 +45,13 @@ class PuzzleEditor(tkinter.Frame):
     def getPuzzle(self): return None
     def saved(self): pass
     def changed(self): return False
+
+class CreationArea(tkinter.tix.ScrolledWindow):
+    def __init__(self, master, height, width, getmode=None):
+        tkinter.tix.ScrolledWindow.__init__(self, master, scrollbar="auto")
+
+        self.getmode = getmode
+        for x in range(width):
+            for y in range(height):
+                tkinter.tix.Button(self.window, text="x").grid(
+                    sticky="nsew", row=y, column=x)
