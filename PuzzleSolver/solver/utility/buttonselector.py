@@ -58,10 +58,10 @@ class ButtonSelector(tkinter.Frame):
 
     def add(self, text, item, icon=None):
         def callback():
-            self._select(item)
-            if self.cb_selected and self.selection() is not item:
+            haschanged = (item != self.selection())
+            self.selection(item)
+            if self.cb_selected and haschanged:
                 self.cb_selected(item)
-            self._selected = item
 
         dims = self.grid_size()
         dims = dims[1] if self.vertical else dims[0]

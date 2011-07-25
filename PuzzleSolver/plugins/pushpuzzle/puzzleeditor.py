@@ -43,8 +43,12 @@ class PuzzleEditor(tkinter.Frame):
         self.blank = tkinter.PhotoImage(file=os.path.join(directory, "blank.gif"))
 
     def getPuzzle(self): return None
-    def saved(self): pass
-    def changed(self): return False
+
+    def saved(self):
+        self.creation.saved()
+
+    def changed(self):
+        return self.creation.changed()
 
 class CreationArea(tkinter.tix.ScrolledWindow):
     """Creation area, containing scrolled grid of tiles."""
@@ -53,7 +57,9 @@ class CreationArea(tkinter.tix.ScrolledWindow):
         tkinter.tix.ScrolledWindow.__init__(self, master, scrollbar="auto")
 
         if not isinstance(puzzle, Puzzle):
-            raise ValueError("Type is not a puzzle: " + puzzle.__class__.__name__) # Puzzle is broken
+            raise ValueError("Type is not a puzzle: " + puzzle.__class__.__name__)
+
+        self._changed = True
 
         self.getmode = getmode
         self.buttons = []
@@ -66,6 +72,12 @@ class CreationArea(tkinter.tix.ScrolledWindow):
                 p.grid(sticky="nsew", row=y, column=x)
             self.buttons.append(row)
         self.setContent(puzzle)
+
+    def saved(self):
+        self._changed = False
+
+    def changed(self):
+        return self._changed
 
     def setContent(self, puzzle):
         """Tell each tile what their content should be."""
@@ -101,6 +113,7 @@ class CreationArea(tkinter.tix.ScrolledWindow):
             elif mode == "TARGET":
                 self.click(tile, None, not tile.target())
         else:
+            self._changed = True
             if target != None:
                 tile.target(target)
             if content != None:
