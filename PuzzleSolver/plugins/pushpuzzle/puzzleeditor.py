@@ -14,9 +14,6 @@ EDIT_MODES = ["EMPTY", "WALL", "TARGET", "BOX", "PLAYER"]
 
 class PuzzleEditor(tkinter.Frame):
     def __init__(self, master, puzzle):
-        if not isinstance(puzzle, Puzzle):
-            raise ValueError # Puzzle is broken
-
         tkinter.Frame.__init__(self, master)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -27,7 +24,7 @@ class PuzzleEditor(tkinter.Frame):
             self.modeselect.add("Edit " + mode.title(), mode, self.icons[mode])
         self.modeselect.grid(sticky="nsew", row=1, column=0)
 
-        self.creation = CreationArea(self, puzzle.height, puzzle.width, getmode=self.modeselect.selection())
+        self.creation = CreationArea(self, puzzle, getmode=self.modeselect.selection)
         self.creation.grid(sticky="nsew", row=0, column=0)
 
 
@@ -47,11 +44,63 @@ class PuzzleEditor(tkinter.Frame):
     def changed(self): return False
 
 class CreationArea(tkinter.tix.ScrolledWindow):
-    def __init__(self, master, height, width, getmode=None):
+    """Creation area, containing scrolled grid of tiles."""
+
+    def __init__(self, master, puzzle, getmode=None):
         tkinter.tix.ScrolledWindow.__init__(self, master, scrollbar="auto")
 
+        if not isinstance(puzzle, Puzzle):
+            raise ValueError("Type is not a puzzle: " + puzzle.__class__.__name__) # Puzzle is broken
+
         self.getmode = getmode
-        for x in range(width):
-            for y in range(height):
-                tkinter.tix.Button(self.window, text="x").grid(
-                    sticky="nsew", row=y, column=x)
+        self.buttons = []
+        for x in range(puzzle.width):
+            row = []
+            for y in range(puzzle.height):
+                pos = (x, y)
+                p = PuzzleTile(self.window,
+                               wall = (pos in puzzle.walls),
+                               target = (pos in puzzle.targets),
+                               box = (pos in puzzle.initial().boxes),
+                               player = (pos == puzzle.initial().player),
+                               clicked=self.click)
+                row.append(p)
+                p.grid(sticky="nsew", row=y, column=x)
+            self.buttons.append(row)
+
+    def click(self, tile):
+        """On click callback for clicks on PuzzleTiles."""
+
+        pass
+
+class PuzzleTile(tkinter.Button):
+    """Single tile in the puzzle."""
+
+    def __init__(self, master, wall=False, target=False, box=False, player=False, clicked=None):
+        tkinter.Button.__init__(self, master, text="x", command=self.click)
+        self.clicked = clicked
+        # could raise and propagate valueerror
+        self._content = self.chooseContent(wall, target, box, player)
+
+    def chooseContent(self, wall, target, box, player):
+        """Decide which of the content we should display."""
+
+        if sum(1 for x in [wall, target, box, player] if x) > 1:
+            raise ValueError("Cannot display this puzzle.")
+
+        if wall:
+            return "WALL"
+        elif target:
+            return "TARGET"
+        elif box:
+            return "BOX"
+        elif player:
+            return "PLAYER"
+        else:
+            return "EMPTY"
+
+    def content(self):
+        return self._content
+
+    def click(self):
+        self.clicked(self)
