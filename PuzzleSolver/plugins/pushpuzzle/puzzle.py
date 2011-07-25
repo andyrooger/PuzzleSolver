@@ -60,3 +60,26 @@ class PuzzleState:
             return False
 
         return True
+
+    def recordAccessibility(self, parent):
+        """Create and record a set describing accessible coordinates from this state."""
+
+        self.accessible = set()
+        if self.player != None:
+            self._expandAccessible(parent, self.player)
+
+    def _expandAccessible(self, parent, pos):
+        """Open up accessibility from the position pos."""
+
+        if (parent.inArea(*pos) and
+            pos not in self.accessible and
+            pos not in parent.walls and
+            pos not in self.boxes):
+
+            self.accessible.add(pos)
+
+            x, y = pos
+            self._expandAccessible(parent, (x-1, y))
+            self._expandAccessible(parent, (x+1, y))
+            self._expandAccessible(parent, (x, y-1))
+            self._expandAccessible(parent, (x, y+1))
