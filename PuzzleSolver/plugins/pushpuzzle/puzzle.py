@@ -50,6 +50,16 @@ class Puzzle:
 
         return self.states[self.curstate]
 
+    def cursor(self, cur=None):
+        if cur != None:
+            if cur < 0 or cur >= len(self):
+                raise IndexError
+            self.curstate = cur
+        return self.curstate
+
+    def __len__(self):
+        return len(self.states)
+
 class PuzzleState:
     """Information on parts of the puzzle that can change during the play."""
 
@@ -72,6 +82,9 @@ class PuzzleState:
 
     def valid(self):
         if self.player == None or not self.parent.inArea(*self.player):
+            return False
+
+        if len(self.boxes) != len(self.parent.targets):
             return False
 
         if not all(self.parent.inArea(x, y) for (x, y) in self.boxes):

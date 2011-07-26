@@ -119,6 +119,11 @@ class PlayFrame(tkinter.Frame):
         self.buttonState()
 
     def load(self, puzzle):
-        self.playarea = PlayArea(self.playframe, puzzle, self.change)
+        try:
+            p = PlayArea(self.playframe, puzzle, self.change)
+        except ValueError:
+            return False
+        self.playarea = p
         self.playframe.setContent(self.playarea)
         self.clean()
+        return True
