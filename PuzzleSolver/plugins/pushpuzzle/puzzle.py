@@ -103,10 +103,10 @@ class PuzzleState:
             self.accessible.add(pos)
 
             x, y = pos
-            self._expandAccessible(self.parent, (x-1, y))
-            self._expandAccessible(self.parent, (x+1, y))
-            self._expandAccessible(self.parent, (x, y-1))
-            self._expandAccessible(self.parent, (x, y+1))
+            self._expandAccessible((x-1, y))
+            self._expandAccessible((x+1, y))
+            self._expandAccessible((x, y-1))
+            self._expandAccessible((x, y+1))
 
     def goal(self):
         """Have we achieved our goal?"""
