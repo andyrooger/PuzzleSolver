@@ -9,6 +9,7 @@ import tkinter.tix
 
 from . puzzle import Puzzle
 from solver.utility.buttonselector import ButtonSelector
+from . import style
 
 EDIT_MODES = ["EMPTY", "WALL", "TARGET", "BOX", "PLAYER"]
 
@@ -18,29 +19,13 @@ class PuzzleEditor(tkinter.Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        self.loadIcons()
         self.modeselect = ButtonSelector(self)
         for mode in EDIT_MODES:
-            self.modeselect.add("Edit " + mode.title(), mode, self.icons[mode])
+            self.modeselect.add("Edit " + mode.title(), mode, style.loadIcon(mode))
         self.modeselect.grid(sticky="nsew", row=1, column=0)
 
-        creationicons = {"PLAYER": self.icons["PLAYER"],
-                         "BOX": self.icons["BOX"],
-                         "BLANK": self.blank}
-        self.creation = CreationArea(self, puzzle, icons=creationicons, getmode=self.modeselect.selection)
+        self.creation = CreationArea(self, puzzle, getmode=self.modeselect.selection)
         self.creation.grid(sticky="nsew", row=0, column=0)
-
-    def loadIcons(self):
-        """Load and store all necessary icons."""
-
-        directory = os.path.dirname(__file__)
-        directory = os.path.join(directory, "resources", "images")
-
-        self.icons = {
-            mode: tkinter.PhotoImage(file=os.path.join(directory, mode.lower()+".gif"))
-            for mode in EDIT_MODES
-        }
-        self.blank = tkinter.PhotoImage(file=os.path.join(directory, "blank.gif"))
 
     def getPuzzle(self):
         return self.creation.getPuzzle()
@@ -54,7 +39,7 @@ class PuzzleEditor(tkinter.Frame):
 class CreationArea(tkinter.tix.ScrolledWindow):
     """Creation area, containing scrolled grid of tiles."""
 
-    def __init__(self, master, puzzle, icons=None, getmode=None):
+    def __init__(self, master, puzzle, getmode=None):
         tkinter.tix.ScrolledWindow.__init__(self, master, scrollbar="auto")
 
         if not isinstance(puzzle, Puzzle):
@@ -68,7 +53,7 @@ class CreationArea(tkinter.tix.ScrolledWindow):
             row = []
             for x in range(puzzle.width):
                 pos = (x, y)
-                p = PuzzleTile(self.window, pos, icons, clicked=self.click)
+                p = PuzzleTile(self.window, pos, clicked=self.click)
                 row.append(p)
                 p.grid(sticky="nsew", row=y, column=x)
             self.buttons.append(row)
@@ -154,10 +139,9 @@ class CreationArea(tkinter.tix.ScrolledWindow):
 class PuzzleTile(tkinter.Button):
     """Single tile in the puzzle."""
 
-    def __init__(self, master, pos, icons, clicked=None):
+    def __init__(self, master, pos, clicked=None):
         tkinter.Button.__init__(self, master, relief="flat", command=self.click)
         self.pos = pos
-        self.icons = icons
         self.clicked = clicked
         # could raise and propagate valueerror
         self.content("EMPTY", noupdate=True)
@@ -179,14 +163,7 @@ class PuzzleTile(tkinter.Button):
     def appearance(self):
         """Set up appearance."""
 
-        bg = "blue" if self.content() == "WALL" else "white"
-        abg = "darkblue" if self.content() == "WALL" else "gray"
-        icon = self.icons.get(self.content(), self.icons["BLANK"])
-        hbg = "red" if self.target() else "lightgray"
-        self.config(bg=bg, image=icon,
-                    highlightbackground=hbg,
-                    highlightthickness=3,
-                    activebackground=abg)
+        self.config(**style.tileStyle(self.content(), self.target()))
 
     def click(self):
         self.clicked(self)
