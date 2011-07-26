@@ -121,6 +121,7 @@ class PlayFrame(tkinter.Frame):
     def load(self, puzzle):
         try:
             p = PlayArea(self.playframe, puzzle, self.change)
+            self._changed = False
         except ValueError:
             return False
         self.playarea = p

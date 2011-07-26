@@ -16,7 +16,7 @@ class PlayArea(tkinter.tix.ScrolledWindow):
         tkinter.tix.ScrolledWindow.__init__(self, master, scrollbar="auto")
 
         if not isinstance(puzzle, Puzzle) or not puzzle.valid():
-            return ValueError
+            raise ValueError
 
         self.puzzle = puzzle
         self.changecb = changecb or (lambda: None)
@@ -46,7 +46,6 @@ class PlayArea(tkinter.tix.ScrolledWindow):
         def click():
             self.clicked(pos)
         btn = tkinter.Button(self.window, relief=tkinter.FLAT, command=click)
-        btn.config(**style.tileStyle("EMPTY", False, separated=False))
         return btn
 
     def clicked(self, pos):
