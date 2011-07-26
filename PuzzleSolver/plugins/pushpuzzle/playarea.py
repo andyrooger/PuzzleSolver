@@ -33,11 +33,14 @@ class PlayArea(tkinter.tix.ScrolledWindow):
                 tile = self.createTile((x,y))
                 row.append(tile)
                 tile.grid(sticky="nsew", row=y, column=x)
-                wall = ((x,y) in self.puzzle.walls)
+                content = ("WALL" if (x,y) in self.puzzle.walls else "EMPTY")
+                if self.puzzle.initial().player == (x, y):
+                    content = "PLAYER"
+                if (x, y) in self.puzzle.initial().boxes:
+                    content = "BOX"
                 target = ((x,y) in self.puzzle.targets)
-                tile.config(**style.tileStyle("WALL" if wall else "EMPTY", target, separated=False))
+                tile.config(**style.tileStyle(content, target, separated=False))
             self.buttons.append(row)
-
 
     def createTile(self, pos):
         def click():
