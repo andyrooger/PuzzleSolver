@@ -7,6 +7,8 @@ import tkinter
 import os.path
 
 import solver.plugin
+from solver.utility.simpleframe import SimpleFrame
+from . playarea import PlayArea
 
 class PlayView(solver.plugin.PuzzleView):
     """Functionality for Push Puzzle playing."""
@@ -26,19 +28,19 @@ class PlayView(solver.plugin.PuzzleView):
         return ".spp"
 
     def getPuzzle(self):
-        return None
+        return self.frame.getPuzzle()
 
     def changed(self):
-        return False
+        return self.frame.changed()
 
     def saved(self):
-        pass
+        self.frame.saved()
 
     def clean(self):
-        pass
+        self.frame.clean()
 
     def load(self, puzzle):
-        return False
+        return self.frame.load(puzzle)
 
 class PlayFrame(tkinter.Frame):
     """GUI for playing the game."""
@@ -49,11 +51,60 @@ class PlayFrame(tkinter.Frame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
+        self.playframe = SimpleFrame(self)
+        self.playframe.grid(sticky="nsew", columnspan=2, row=1, column=0)
+        self.playarea = tkinter.Label(self.playframe, text="No puzzle loaded yet.")
+        self.playframe.setContent(self.playarea)
+
         directory = os.path.dirname(__file__)
         directory = os.path.join(directory, "resources", "images")
+        def prev():
+            self.playarea.prev()
+            self.buttonState()
+        def next():
+            self.playarea.next()
+            self.buttonState()
         self.larrow = tkinter.PhotoImage(file=os.path.join(directory, "larrow.gif"))
         self.rarrow = tkinter.PhotoImage(file=os.path.join(directory, "rarrow.gif"))
-        tkinter.Button(self, image=self.larrow).grid(sticky="nsew", row=0, column=0)
-        tkinter.Button(self, image=self.rarrow).grid(sticky="nsew", row=0, column=1)
+        self.prevarrow = tkinter.Button(self, image=self.larrow, command=prev)
+        self.prevarrow.grid(sticky="nsew", row=0, column=0)
+        self.nextarrow = tkinter.Button(self, image=self.rarrow, command=next)
+        self.nextarrow.grid(sticky="nsew", row=0, column=1)
+        self.buttonState()
 
-        tkinter.Label(self, text="Play Mode!!!").grid(sticky="nsew", columnspan=2, row=1, column=0)
+    def puzzleLoaded(self):
+        return isinstance(self.playarea, PlayArea)
+
+    def buttonState(self):
+        """Set disabled state for buttons."""
+
+        if not self.puzzleLoaded():
+            self.prevarrow.config(state=tkinter.DISABLED)
+            self.nextarrow.config(state=tkinter.DISABLED)
+            return
+
+        self.prevarrow.config(state=(
+            tkinter.NORMAL if self.playarea.hasprev() else tkinter.DISABLED
+        ))
+        self.nextarrow.config(state=(
+            tkinter.NORMAL if self.playarea.hasnext() else tkinter.DISABLED
+        ))
+
+    def changed(self):
+        return False
+
+    def saved(self):
+        pass
+
+    def getPuzzle(self):
+        return None
+
+    def clean(self):
+        if self.puzzleLoaded():
+            self.playarea.rewind()
+            self.buttonState()
+
+    def load(self, puzzle):
+        self.playarea = PlayArea(self.playframe, puzzle)
+        self.playframe.setContent(self.playarea)
+        self.buttonState()
