@@ -4,14 +4,16 @@ Area for playing the Push Puzzle.
 """
 
 import tkinter
+import tkinter.tix
 
+from . import style
 from . puzzle import Puzzle
 
-class PlayArea(tkinter.Frame):
+class PlayArea(tkinter.tix.ScrolledWindow):
     """GUI component for playing push puzzles."""
 
     def __init__(self, master, puzzle, changecb=None):
-        tkinter.Frame.__init__(self, master)
+        tkinter.tix.ScrolledWindow.__init__(self, master, scrollbar="auto")
 
         if not isinstance(puzzle, Puzzle) or not puzzle.valid():
             return ValueError
@@ -19,9 +21,35 @@ class PlayArea(tkinter.Frame):
         self.puzzle = puzzle
         self.changecb = changecb or (lambda: None)
 
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        tkinter.Label(self, text="Play Mode!!!").grid(sticky="nsew")
+        self.initialSetup()
+
+    def initialSetup(self):
+        """Set up the parts of the view that are constant."""
+
+        self.buttons = []
+        for y in range(self.puzzle.height):
+            row = []
+            for x in range(self.puzzle.width):
+                tile = self.createTile((x,y))
+                row.append(tile)
+                tile.grid(sticky="nsew", row=y, column=x)
+                wall = ((x,y) in self.puzzle.walls)
+                target = ((x,y) in self.puzzle.targets)
+                tile.config(**style.tileStyle("WALL" if wall else "EMPTY", target, separated=False))
+            self.buttons.append(row)
+
+
+    def createTile(self, pos):
+        def click():
+            self.clicked(pos)
+        btn = tkinter.Button(self.window, relief=tkinter.FLAT, command=click)
+        btn.config(**style.tileStyle("EMPTY", False, separated=False))
+        return btn
+
+    def clicked(self, pos):
+        """One of the tiles has been clicked."""
+
+        print("Clicked " + str(pos))
 
     def rewind(self):
         """Go to the beginning of the play area."""
