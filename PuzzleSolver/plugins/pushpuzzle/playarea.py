@@ -21,6 +21,9 @@ class PlayArea(tkinter.tix.ScrolledWindow):
         self.puzzle = puzzle
         self.changecb = changecb or (lambda: None)
 
+        self.focus_set()
+        self.bind("<Key>", self.keypress)
+
         self.initialSetup()
 
     def initialSetup(self):
@@ -52,6 +55,14 @@ class PlayArea(tkinter.tix.ScrolledWindow):
         """One of the tiles has been clicked."""
 
         print("Clicked " + str(pos))
+
+    def keypress(self, evt):
+        """A key has been pressed."""
+
+        CODES = {111: "UP", 116: "DOWN", 113: "LEFT", 114: "RIGHT"}
+
+        if evt.keycode in CODES:
+            print("Pressed: " + CODES[evt.keycode])
 
     def rewind(self):
         """Go to the beginning of the play area."""
