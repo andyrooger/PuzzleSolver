@@ -9,6 +9,8 @@ import tkinter.tix
 from . import style
 from . puzzle import Puzzle
 
+KEYCODES = {111: "UP", 116: "DOWN", 113: "LEFT", 114: "RIGHT"}
+
 class PlayArea(tkinter.tix.ScrolledWindow):
     """GUI component for playing push puzzles."""
 
@@ -24,10 +26,21 @@ class PlayArea(tkinter.tix.ScrolledWindow):
         self.focus_set()
         self.bind("<Key>", self.keypress)
 
-        self.initialSetup()
+        self.createView()
 
-    def initialSetup(self):
-        """Set up the parts of the view that are constant."""
+    def setupTile(self, tile, pos):
+        """Setup view for a single tile."""
+
+        content = ("WALL" if pos in self.puzzle.walls else "EMPTY")
+        if self.puzzle.state().player == pos:
+            content = "PLAYER"
+        if pos in self.puzzle.state().boxes:
+            content = "BOX"
+        target = (pos in self.puzzle.targets)
+        tile.config(**style.tileStyle(content, target, separated=False))
+
+    def createView(self):
+        """Create the main part of the GUI."""
 
         self.buttons = []
         for y in range(self.puzzle.height):
@@ -36,14 +49,15 @@ class PlayArea(tkinter.tix.ScrolledWindow):
                 tile = self.createTile((x,y))
                 row.append(tile)
                 tile.grid(sticky="nsew", row=y, column=x)
-                content = ("WALL" if (x,y) in self.puzzle.walls else "EMPTY")
-                if self.puzzle.initial().player == (x, y):
-                    content = "PLAYER"
-                if (x, y) in self.puzzle.initial().boxes:
-                    content = "BOX"
-                target = ((x,y) in self.puzzle.targets)
-                tile.config(**style.tileStyle(content, target, separated=False))
+                self.setupTile(tile, (x, y))
             self.buttons.append(row)
+
+    def updateView(self):
+        """Update the look of each tile."""
+
+        for y, row in enumerate(self.buttons):
+            for x, tile in enumerate(row):
+                self.setupTile(tile, (x, y))
 
     def createTile(self, pos):
         def click():
@@ -59,21 +73,51 @@ class PlayArea(tkinter.tix.ScrolledWindow):
     def keypress(self, evt):
         """A key has been pressed."""
 
-        CODES = {111: "UP", 116: "DOWN", 113: "LEFT", 114: "RIGHT"}
+        if evt.keycode in KEYCODES:
+            self.move(KEYCODES[evt.keycode])
 
-        if evt.keycode in CODES:
-            print("Pressed: " + CODES[evt.keycode])
+    def move(self, direction):
+        """Move the player if possible."""
+
+        current = self.puzzle.state().player
+        to = self.puzzle.adjacent(self.puzzle.state().player, direction)
+
+        if to == None:
+            return False
+
+        boxto = None
+
+        if to not in self.puzzle.state().accessible: # not accessible
+            if to not in self.puzzle.state().boxes: # and not pushing box
+                return False
+            boxto = self.puzzle.adjacent(to, direction)
+            if boxto == None: # box not moving inside play area
+                return False
+            if boxto in self.puzzle.state().boxes or boxto in self.puzzle.walls: # box moving into resistance
+                return False
+
+        self.puzzle.addState()
+        if boxto != None:
+            self.puzzle.state().boxes.remove(to)
+            self.puzzle.state().boxes.add(boxto)
+        self.puzzle.state().player = to
+        self.puzzle.state().finalise()
+        self.updateView()
+        self.changecb()
+        return True
 
     def rewind(self):
         """Go to the beginning of the play area."""
 
         self.puzzle.cursor(0)
+        self.updateView()
 
     def next(self):
         """Go to the next state. Return whether successful."""
 
         try:
             self.puzzle.cursor(self.puzzle.cursor()+1)
+            self.updateView()
             return True
         except IndexError:
             return False
@@ -88,6 +132,7 @@ class PlayArea(tkinter.tix.ScrolledWindow):
 
         try:
             self.puzzle.cursor(self.puzzle.cursor()-1)
+            self.updateView()
             return True
         except IndexError:
             return False
