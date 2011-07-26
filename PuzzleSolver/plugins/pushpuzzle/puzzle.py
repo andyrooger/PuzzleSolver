@@ -23,6 +23,20 @@ class Puzzle:
             return False
         return True
 
+    def adjacent(self, pos, direction):
+        """Return the position adjacent to our position in the corresponding direction."""
+
+        if direction == "UP":
+            return (pos[0], pos[1]-1) if pos[1] > 0 else None
+        elif direction == "DOWN":
+            return (pos[0], pos[1]+1) if pos[1] < self.height-1 else None
+        elif direction == "LEFT":
+            return (pos[0]-1, pos[1]) if pos[0] > 0 else None
+        elif direction == "RIGHT":
+            return (pos[0]+1, pos[1]) if pos[0] < self.width-1 else None
+        else:
+            return None
+
     def valid(self, children=True):
         """Is this a valid setup?"""
 
@@ -56,6 +70,12 @@ class Puzzle:
                 raise IndexError
             self.curstate = cur
         return self.curstate
+
+    def addState(self):
+        """Add a new state identical to the current after our current state and remove any following."""
+
+        self.states[self.curstate+1:] = [self.state().copy()]
+        self.curstate = len(self)-1
 
     def __len__(self):
         return len(self.states)
@@ -125,3 +145,11 @@ class PuzzleState:
         """Have we achieved our goal?"""
 
         return self.parent.targets.difference(self.boxes)
+
+    def copy(self):
+        """Return an identical copy to this state, but not finalised."""
+
+        p = PuzzleState(self.parent)
+        p.player = self.player
+        p.boxes = self.boxes.copy()
+        return p
