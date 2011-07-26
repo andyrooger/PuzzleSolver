@@ -47,6 +47,9 @@ class PlayFrame(tkinter.Frame):
 
     def __init__(self, master):
         tkinter.Frame.__init__(self, master)
+
+        self._changed = False
+
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
@@ -56,21 +59,26 @@ class PlayFrame(tkinter.Frame):
         self.playarea = tkinter.Label(self.playframe, text="No puzzle loaded yet.")
         self.playframe.setContent(self.playarea)
 
-        directory = os.path.dirname(__file__)
-        directory = os.path.join(directory, "resources", "images")
+        self.loadIcons()
         def prev():
             self.playarea.prev()
             self.buttonState()
         def next():
             self.playarea.next()
             self.buttonState()
-        self.larrow = tkinter.PhotoImage(file=os.path.join(directory, "larrow.gif"))
-        self.rarrow = tkinter.PhotoImage(file=os.path.join(directory, "rarrow.gif"))
         self.prevarrow = tkinter.Button(self, image=self.larrow, command=prev)
         self.prevarrow.grid(sticky="nsew", row=0, column=0)
         self.nextarrow = tkinter.Button(self, image=self.rarrow, command=next)
         self.nextarrow.grid(sticky="nsew", row=0, column=1)
         self.buttonState()
+
+    def loadIcons(self):
+        """Ensure that the necessary icons are loaded for the interface."""
+
+        directory = os.path.dirname(__file__)
+        directory = os.path.join(directory, "resources", "images")
+        self.larrow = tkinter.PhotoImage(file=os.path.join(directory, "larrow.gif"))
+        self.rarrow = tkinter.PhotoImage(file=os.path.join(directory, "rarrow.gif"))
 
     def puzzleLoaded(self):
         return isinstance(self.playarea, PlayArea)
@@ -91,10 +99,10 @@ class PlayFrame(tkinter.Frame):
         ))
 
     def changed(self):
-        return False
+        return self._changed
 
     def saved(self):
-        pass
+        self._changed = False
 
     def getPuzzle(self):
         return None
@@ -104,7 +112,13 @@ class PlayFrame(tkinter.Frame):
             self.playarea.rewind()
             self.buttonState()
 
-    def load(self, puzzle):
-        self.playarea = PlayArea(self.playframe, puzzle)
-        self.playframe.setContent(self.playarea)
+    def change(self):
+        """Called whenever the puzzle is edited."""
+
+        self._changed = True
         self.buttonState()
+
+    def load(self, puzzle):
+        self.playarea = PlayArea(self.playframe, puzzle, self.change)
+        self.playframe.setContent(self.playarea)
+        self.clean()

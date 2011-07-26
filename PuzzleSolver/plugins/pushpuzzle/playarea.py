@@ -8,8 +8,11 @@ import tkinter
 class PlayArea(tkinter.Frame):
     """GUI component for playing push puzzles."""
 
-    def __init__(self, master, puzzle):
+    def __init__(self, master, puzzle, changecb=None):
         tkinter.Frame.__init__(self, master)
+
+        self.changecb = changecb or (lambda: None)
+
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         tkinter.Label(self, text="Play Mode!!!").grid(sticky="nsew")
