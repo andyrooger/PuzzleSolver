@@ -182,10 +182,10 @@ class PuzzleTile(tkinter.Button):
         bg = "blue" if self.content() == "WALL" else "white"
         abg = "darkblue" if self.content() == "WALL" else "gray"
         icon = self.icons.get(self.content(), self.icons["BLANK"])
-        hbg = "red" if self.target() else "black"
+        hbg = "red" if self.target() else "lightgray"
         self.config(bg=bg, image=icon,
                     highlightbackground=hbg,
-                    highlightthickness=1,
+                    highlightthickness=3,
                     activebackground=abg)
 
     def click(self):
