@@ -21,7 +21,7 @@ def loadIcon(name):
     icons[name] = tkinter.PhotoImage(file=file)
     return icons[name]
 
-def tileStyle(content, target):
+def tileStyle(content, target, separated=True):
     """Get the style for a certain tile."""
 
     bg = "blue" if content == "WALL" else "white"
@@ -29,7 +29,10 @@ def tileStyle(content, target):
     icon = (loadIcon(content)
             if content in ["PLAYER", "BOX"]
             else loadIcon("BLANK"))
-    hbg = "red" if target else "lightgray"
+    if separated:
+        hbg = "red" if target else "lightgray"
+    else:
+        hbg = "red" if target else "white"
 
     return {"bg": bg, "image": icon,
             "highlightbackground": hbg,
