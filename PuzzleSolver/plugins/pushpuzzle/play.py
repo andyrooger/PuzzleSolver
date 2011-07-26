@@ -8,6 +8,8 @@ import os.path
 
 import solver.plugin
 from solver.utility.simpleframe import SimpleFrame
+
+from . import style
 from . playarea import PlayArea
 
 class PlayView(solver.plugin.PuzzleView):
@@ -18,7 +20,7 @@ class PlayView(solver.plugin.PuzzleView):
         self.frame = None
 
     def getFrame(self, master):
-        self.frame = PlayFrame(master)
+        self.frame = PlaceholderPlayFrame(master)
         return self.frame
 
     def canSolve(self): return False
@@ -42,54 +44,69 @@ class PlayView(solver.plugin.PuzzleView):
     def load(self, puzzle):
         return self.frame.load(puzzle)
 
+class PlaceholderPlayFrame(SimpleFrame):
+    """Like SimpleFrame but has a placeholder before a puzzle is loaded."""
+
+    def __init__(self, master):
+        SimpleFrame.__init__(self, master)
+
+        self.setContent(tkinter.Label(self, text="No puzzle loaded yet."))
+
+    def puzzleLoaded(self):
+        return isinstance(self.content, PlayFrame)
+
+    def changed(self):
+        return self.content.changed() if self.puzzleLoaded() else False
+
+    def saved(self):
+        if self.puzzleLoaded():
+            self.content.saved()
+
+    def getPuzzle(self):
+        return self.content.getPuzzle() if self.puzzleLoaded() else None
+
+    def clean(self):
+        if self.puzzleLoaded():
+            self.content.clean()
+
+    def load(self, puzzle):
+        try:
+            p = PlayFrame(self, puzzle)
+            self.setContent(p)
+            return True
+        except ValueError:
+            return False
+
 class PlayFrame(tkinter.Frame):
     """GUI for playing the game."""
 
-    def __init__(self, master):
+    def __init__(self, master, puzzle):
         tkinter.Frame.__init__(self, master)
-
-        self._changed = False
 
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        self.playframe = SimpleFrame(self)
-        self.playframe.grid(sticky="nsew", columnspan=2, row=1, column=0)
-        self.playarea = tkinter.Label(self.playframe, text="No puzzle loaded yet.")
-        self.playframe.setContent(self.playarea)
+        self._changed = False
+        self.playarea = PlayArea(self, puzzle, self.change) # Could throw valueerror
+        self.playarea.grid(sticky="nsew", columnspan=2, row=1, column=0)
 
-        self.loadIcons()
         def prev():
             self.playarea.prev()
             self.buttonState()
         def next():
             self.playarea.next()
             self.buttonState()
-        self.prevarrow = tkinter.Button(self, image=self.larrow, command=prev)
+        self.prevarrow = tkinter.Button(self, image=style.loadIcon("larrow"), command=prev)
         self.prevarrow.grid(sticky="nsew", row=0, column=0)
-        self.nextarrow = tkinter.Button(self, image=self.rarrow, command=next)
+        self.nextarrow = tkinter.Button(self, image=style.loadIcon("rarrow"), command=next)
         self.nextarrow.grid(sticky="nsew", row=0, column=1)
         self.buttonState()
 
-    def loadIcons(self):
-        """Ensure that the necessary icons are loaded for the interface."""
-
-        directory = os.path.dirname(__file__)
-        directory = os.path.join(directory, "resources", "images")
-        self.larrow = tkinter.PhotoImage(file=os.path.join(directory, "larrow.gif"))
-        self.rarrow = tkinter.PhotoImage(file=os.path.join(directory, "rarrow.gif"))
-
-    def puzzleLoaded(self):
-        return isinstance(self.playarea, PlayArea)
+        self.clean()
 
     def buttonState(self):
         """Set disabled state for buttons."""
-
-        if not self.puzzleLoaded():
-            self.prevarrow.config(state=tkinter.DISABLED)
-            self.nextarrow.config(state=tkinter.DISABLED)
-            return
 
         self.prevarrow.config(state=(
             tkinter.NORMAL if self.playarea.hasprev() else tkinter.DISABLED
@@ -105,12 +122,11 @@ class PlayFrame(tkinter.Frame):
         self._changed = False
 
     def getPuzzle(self):
-        return None
+        return None # TODO - maybe
 
     def clean(self):
-        if self.puzzleLoaded():
-            self.playarea.rewind()
-            self.buttonState()
+        self.playarea.rewind()
+        self.buttonState()
 
     def change(self):
         """Called whenever the puzzle is edited."""
@@ -118,13 +134,3 @@ class PlayFrame(tkinter.Frame):
         self._changed = True
         self.buttonState()
 
-    def load(self, puzzle):
-        try:
-            p = PlayArea(self.playframe, puzzle, self.change)
-            self._changed = False
-        except ValueError:
-            return False
-        self.playarea = p
-        self.playframe.setContent(self.playarea)
-        self.clean()
-        return True
