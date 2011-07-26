@@ -57,7 +57,18 @@ class PuzzleState:
         self.parent = parent
         self.player = None
         self.boxes = set()
+        self.finalised = False
+
+    # Allow finalisation
+    def __setattr__(self, *vargs):
+        if not hasattr(self, "finalised") or not self.finalised:
+            super().__setattr__(*vargs)
+        else:
+            raise ValueError("Cannot edit a finalised puzzle state.")
+
+    def finalise(self):
         self.recordAccessibility()
+        self.finalised = True
 
     def valid(self):
         if self.player == None or not self.parent.inArea(*self.player):

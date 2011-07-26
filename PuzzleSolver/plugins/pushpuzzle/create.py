@@ -45,7 +45,9 @@ class CreateFrame(SimpleFrame):
 
     def clean(self):
         def puzzle_create(r, c):
-            self.setContent(PuzzleEditor(self, Puzzle(r, c)))
+            p = Puzzle(r, c)
+            p.initial().finalise()
+            self.setContent(PuzzleEditor(self, p))
         self.setContent(DimensionChooser(self, puzzle_create))
 
     def load(self, puzzle):

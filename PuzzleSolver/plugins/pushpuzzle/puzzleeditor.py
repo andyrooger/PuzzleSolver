@@ -148,6 +148,7 @@ class CreationArea(tkinter.tix.ScrolledWindow):
                     p.walls.add(tile.pos)
                 if tile.target():
                     p.targets.add(tile.pos)
+        p.initial().finalise()
         return p
 
 class PuzzleTile(tkinter.Button):
