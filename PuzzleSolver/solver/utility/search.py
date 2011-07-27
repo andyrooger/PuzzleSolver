@@ -3,7 +3,6 @@ Helpful search algorithms for use by plugins.
 
 """
 
-# TODO - make sure states aren't added twice and identical STATEs only keep the best expected, higher cost comes before lower (if the expected is the same)
 class DictSortedSet:
     """Orders states using various levels of dicts."""
 
@@ -32,6 +31,19 @@ class DictSortedSet:
         if not e_dict: # remove empty expected level
             del self.open[min_exp]
         return item
+
+class DictSortedUniqueSet(DictSortedSet):
+    """Like DictSortedSet but with an additional closed set."""
+
+    def __init__(self):
+        DictSortedSet.__init__(self)
+        self.closed = set()
+
+    def add(self, item):
+        if item[0] in self.closed:
+            return
+        super().add(item)
+        self.closed.add(item)
 
 class BasicSet:
     """Uses set for the most basic implementation of our set."""
