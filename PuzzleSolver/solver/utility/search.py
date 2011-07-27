@@ -4,6 +4,35 @@ Helpful search algorithms for use by plugins.
 """
 
 # TODO - make sure states aren't added twice and identical STATEs only keep the best expected, higher cost comes before lower (if the expected is the same)
+class DictSortedSet:
+    """Orders states using various levels of dicts."""
+
+    def __init__(self):
+        self.open = {}
+
+    def add(self, item):
+        state, cost, expected, _ = item # split parts
+
+        if expected not in self.open: # expected cost level
+            self.open[expected] = {}
+        e_dict = self.open[expected]
+        if cost not in e_dict: # current cost level
+            e_dict[cost] = set()
+        e_dict[cost].add(item)
+
+    def take(self):
+        if not self.open: # no states left
+            raise KeyError
+        min_exp = min(k for k in self.open) # smallest expected
+        e_dict = self.open[min_exp]
+        max_cost = max(k for k in e_dict) # largest current
+        item = e_dict[max_cost].pop()
+        if not e_dict[max_cost]: # remove current level
+            del e_dict[max_cost]
+        if not e_dict: # remove empty expected level
+            del self.open[min_exp]
+        return item
+
 class BasicSet:
     """Uses set for the most basic implementation of our set."""
 
@@ -19,7 +48,7 @@ class BasicSet:
 class AStar:
     """Provides an implementation for the A* algorithm."""
 
-    def __init__(self, state, goal, heuristic, expander, ProcessingSet=BasicSet):
+    def __init__(self, state, goal, heuristic, expander, ProcessingSet=DictSortedSet):
         self.goal = goal
         self.heuristic = heuristic
         self.expander = expander
