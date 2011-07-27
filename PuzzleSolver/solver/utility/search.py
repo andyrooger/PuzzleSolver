@@ -3,6 +3,8 @@ Helpful search algorithms for use by plugins.
 
 """
 
+import multiprocessing
+
 class DictSortedSet:
     """Orders states using various levels of dicts."""
 
@@ -114,3 +116,80 @@ class AStar:
                 return None
             elif result != True:
                 return result
+
+class ServedAStar(AStar):
+    """Like AStar but the procesing set becomes a server that serves a new item to processes each time one completes."""
+
+    def __init__(self, state, goal, heuristic, expander, groupsize=1, ProcessingSet=DictSortedSet):
+        AStar.__init__(self, state, goal, heuristic, expander, ProcessingSet)
+        self.groupsize = groupsize
+
+    def step_worker(self, pipe, rlock, wlock):
+        while True:
+            with rlock:
+                msg = pipe.recv()
+            if msg == None:
+                return
+            next = self.next_states(msg)
+            with wlock:
+                pipe.send(next)
+
+    def distribute_work(self, pipe, available):
+        """Distribute as much work as possible and return number of processes left."""
+
+        while available > 0:
+            try:
+                state = self.processing.take()
+                pipe.send(state)
+                available -= 1
+            except KeyError:
+                break
+        return available
+
+    def receive_results(self, pipe, available):
+        """Receive all results and return either goal or None"""
+
+        goal = None
+        while pipe.poll():
+            msg = pipe.recv()
+            available += 1
+            if isinstance(msg, list):
+                for state in msg:
+                    self.processing.add(state)
+            else:
+                goal = msg
+        return (available, goal)
+
+    def stop_processes(self, pipe, available):
+        """Stop running processes."""
+
+        for _ in range(self.groupsize-available):
+            pipe.recv()
+
+        for _ in range(self.groupsize):
+            pipe.send(None)
+
+    def solve(self):
+        try:
+            rlock = multiprocessing.Lock()
+            wlock = multiprocessing.Lock()
+            server_pipe, worker_pipe = multiprocessing.Pipe()
+            waiting = self.groupsize
+            processes = [multiprocessing.Process(target=self.step_worker, args=(worker_pipe, rlock, wlock)) for _ in range(self.groupsize)]
+            for proc in processes:
+                proc.start()
+            while True:
+                waiting = self.distribute_work(server_pipe, waiting)
+                if waiting == self.groupsize:
+                    self.stop_processes(server_pipe, waiting)
+                    return None
+                waiting, goal = self.receive_results(server_pipe, waiting)
+                if goal != None:
+                    self.stop_processes(server_pipe, waiting)
+                    return goal
+        finally:
+            while any(p.is_alive() for p in processes):
+                if server_pipe.poll():
+                    server_pipe.recv()
+            server_pipe.close()
+            worker_pipe.close()
