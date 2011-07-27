@@ -93,20 +93,22 @@ class PlayFrame(tkinter.Frame):
 
         def prev():
             self.playarea.prev()
-            self.buttonState()
+            self.controlState()
         def next():
             self.playarea.next()
-            self.buttonState()
+            self.controlState()
         self.prevarrow = tkinter.Button(self, image=style.loadIcon("larrow"), command=prev)
         self.prevarrow.grid(sticky="nsew", row=0, column=0)
         self.nextarrow = tkinter.Button(self, image=style.loadIcon("rarrow"), command=next)
         self.nextarrow.grid(sticky="nsew", row=0, column=1)
-        self.buttonState()
+
+        self.status = tkinter.Label(self, text="")
+        self.status.grid(sticky="nsew", row=2, column=0, columnspan=2)
 
         self.clean()
 
-    def buttonState(self):
-        """Set disabled state for buttons."""
+    def controlState(self):
+        """Set state for all controls."""
 
         self.prevarrow.config(state=(
             tkinter.NORMAL if self.playarea.hasprev() else tkinter.DISABLED
@@ -114,6 +116,9 @@ class PlayFrame(tkinter.Frame):
         self.nextarrow.config(state=(
             tkinter.NORMAL if self.playarea.hasnext() else tkinter.DISABLED
         ))
+
+        info = self.playarea.metrics()
+        self.status["text"] = "Current Move " + str(info["move"]+1) + " / " + str(info["total"]) + " Total Moves"
 
     def changed(self):
         return self._changed
@@ -126,11 +131,11 @@ class PlayFrame(tkinter.Frame):
 
     def clean(self):
         self.playarea.rewind()
-        self.buttonState()
+        self.controlState()
 
     def change(self):
         """Called whenever the puzzle is edited."""
 
         self._changed = True
-        self.buttonState()
+        self.controlState()
 

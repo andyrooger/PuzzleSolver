@@ -141,3 +141,11 @@ class PlayArea(tkinter.tix.ScrolledWindow):
         """Do we have a previous state?"""
 
         return self.puzzle.cursor() > 0
+
+    def metrics(self):
+        """Return useful info about the puzzle state."""
+
+        return {
+            "move": self.puzzle.cursor(),
+            "total": len(self.puzzle)
+        }
