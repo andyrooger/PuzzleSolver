@@ -45,7 +45,7 @@ class DictSortedUniqueSet(DictSortedSet):
         if item[0] in self.closed:
             return
         super().add(item)
-        self.closed.add(item)
+        self.closed.add(item[0])
 
 class BasicSet:
     """Uses set for the most basic implementation of our set."""
@@ -62,7 +62,7 @@ class BasicSet:
 class AStar:
     """Provides an implementation for the A* algorithm."""
 
-    def __init__(self, state, goal, heuristic, expander, ProcessingSet=DictSortedSet):
+    def __init__(self, state, goal, heuristic, expander, ProcessingSet=DictSortedUniqueSet):
         self.goal = goal
         self.heuristic = heuristic
         self.expander = expander
@@ -120,7 +120,7 @@ class AStar:
 class ServedAStar(AStar):
     """Like AStar but the procesing set becomes a server that serves a new item to processes each time one completes."""
 
-    def __init__(self, state, goal, heuristic, expander, groupsize=1, ProcessingSet=DictSortedSet):
+    def __init__(self, state, goal, heuristic, expander, groupsize=1, ProcessingSet=DictSortedUniqueSet):
         AStar.__init__(self, state, goal, heuristic, expander, ProcessingSet)
         self.groupsize = groupsize
         self.statestore = {}
@@ -129,6 +129,8 @@ class ServedAStar(AStar):
         """Convert the state for sending to workers."""
 
         s, cost, expected, parent = state
+        if isinstance(parent, int):
+            return state
         h = hash(parent)
         self.statestore[h] = parent
         return (s, cost, expected, h)
@@ -138,7 +140,8 @@ class ServedAStar(AStar):
 
         s, cost, expected, h = state
         if isinstance(h, int):
-            return (s, cost, expected, self.statestore[h])
+            p = self.statestore[h]
+            return self.receiving_state((s, cost, expected, p))
         elif h == None:
             return state
         else:
@@ -176,7 +179,7 @@ class ServedAStar(AStar):
             available += 1
             if isinstance(msg, list):
                 for state in msg:
-                    self.processing.add(self.receiving_state(state))
+                    self.processing.add(state)
             else:
                 goal = msg
         return (available, goal)
@@ -207,7 +210,7 @@ class ServedAStar(AStar):
                 waiting, goal = self.receive_results(server_pipe, waiting)
                 if goal != None:
                     self.stop_processes(server_pipe, waiting)
-                    return goal
+                    return self.generate_path(self.receiving_state(goal))
         finally:
             while any(p.is_alive() for p in processes):
                 if server_pipe.poll():
