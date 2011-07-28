@@ -101,11 +101,9 @@ class AStar:
         if isinstance(states, list):
             for n in states:
                 self.processing.add(n)
-            return True
-        elif states == None:
-            return None
+            return bool(states) # did we add new states
         else:
-            return self.generate_path(states) # Go answer
+            return states # could be goal or None
 
     def solve(self):
         """Solve the given problem."""
@@ -114,13 +112,13 @@ class AStar:
             result = self.single_step()
             if result == None:
                 return None
-            elif result != True:
-                return result
+            elif not isinstance(result, bool):
+                return self.generate_path(result)
 
 class ServedAStar(AStar):
     """Like AStar but the procesing set becomes a server that serves a new item to processes each time one completes."""
 
-    def __init__(self, state, goal, heuristic, expander, groupsize=1, ProcessingSet=DictSortedUniqueSet):
+    def __init__(self, state, goal, heuristic, expander, groupsize=2, ProcessingSet=DictSortedUniqueSet):
         AStar.__init__(self, state, goal, heuristic, expander, ProcessingSet)
         self.groupsize = groupsize
         self.statestore = {}
@@ -217,3 +215,127 @@ class ServedAStar(AStar):
                     server_pipe.recv()
             server_pipe.close()
             worker_pipe.close()
+
+def ProcessingSetManager(ProcessingSet):
+    """Create a class that spawns a new process to control the class and acts as a proxy anywhere else."""
+
+    class ProcessingSetManager:
+        def __init__(self):
+            #multiprocessing.current_process.name() # The one to delete with
+            # create server process, add and take become clients
+            self.server_pipe, self.client_pipe = multiprocessing.Pipe()
+            self.lock = multiprocessing.Lock() # Every client locks, then send and wait for receive if necessary, then unlock
+            self.processing = None
+            self.manager = multiprocessing.Process(target=self.server)
+            self.manager.start() # Runs independently and closes on finish()
+
+        def server(self):
+            """Serves items back and forth for client."""
+
+            processing = ProcessingSet()
+            while True:
+                msg = self.server_pipe.recv()
+                if msg == None:
+                    self.server_pipe.send(processing)
+                    return
+                elif isinstance(msg, int):
+                    for _ in range(msg):
+                        try:
+                            item = processing.take()
+                        except KeyError:
+                            item = None
+                        self.server_pipe.send(item)
+                else:
+                    processing.add(msg)
+
+        def finish(self):
+            """Tells the manager to stop and make this act as a normal processing set."""
+
+            with self.lock:
+                self.client_pipe.send(None)
+                self.processing = self.client_pipe.recv()
+                self.manager.join()
+
+        def add(self, item):
+            if self.processing == None:
+                with self.lock:
+                    self.client_pipe.send(item)
+            else:
+                self.processing.add(item)
+
+        def take(self):
+            if self.processing == None:
+                with self.lock:
+                    self.client_pipe.send(1)
+                    state = self.client_pipe.recv()
+                    if state == None:
+                        raise KeyError
+                    else:
+                        return state
+            else:
+                return self.processing.take()
+
+    return ProcessingSetManager
+
+class PulledAStar(AStar):
+    """Like ServedAStar but processes pull when available rather than being served."""
+
+    def __init__(self, state, goal, heuristic, expander, groupsize=2, ProcessingSet=DictSortedUniqueSet):
+        AStar.__init__(self, state, goal, heuristic, expander, ProcessingSetManager(ProcessingSet))
+        self.groupsize = groupsize
+        self.statestore = {}
+
+    def step_worker(self, itemsleft, wait_protector, finished, item_protector):
+        """
+        Keep performing single step until processing set is empty. Should use our remote manager set.
+
+        itemsleft is an event that is set whenever states are added to our set and cleared whenever they cannot be retreived.
+        wait_protector is a semaphore with initial value of groupsize-1 to allow all but one process to be waiting at once.
+        finished says if we should quit
+        item_protector is a lock so that we can ensure we only clear itemsleft if finished is untrue
+
+        NOT COMPLETELY SAFE, IN RARE CASES WE COULD DO THINGS WE DO NOT MEAN TO!
+
+        """
+
+        while True:
+            result = self.single_step()
+            if isinstance(result, bool): # expanded a state
+                if result: # Added a state
+                    itemsleft.set()
+            elif result == None: # empty state set
+                if wait_protector.acquire(False): # Not all waiting
+                    item_protector.acquire()
+                    if not finished.is_set():
+                        itemsleft.clear()
+                    item_protector.release()
+                    itemsleft.wait()
+                    wait_protector.release()
+                else: # All waiting
+                    finished.set()
+                    itemsleft.set() # to release the waiting processes
+            else:
+                # Goal, TODO: publish this somehow! 
+                finished.set()
+                itemsleft.set() # to release waiting processes
+
+            if finished.is_set():
+                return
+
+    def solve(self):
+        itemsleft = multiprocessing.Event()
+        itemsleft.set()
+        finished = multiprocessing.Event()
+        wait_protector = multiprocessing.Semaphore(self.groupsize-1)
+        item_protector = multiprocessing.Lock()
+
+        processes = [multiprocessing.Process(target=self.step_worker, args=(itemsleft, wait_protector, finished, item_protector)) for _ in range(self.groupsize)]
+        for proc in processes:
+            proc.start()
+
+        for proc in processes:
+            proc.join()
+
+        self.processing.finish() # kill manager process
+        # TODO - receive results somehow
+        return
