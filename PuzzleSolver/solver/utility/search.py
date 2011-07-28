@@ -123,6 +123,26 @@ class ServedAStar(AStar):
     def __init__(self, state, goal, heuristic, expander, groupsize=1, ProcessingSet=DictSortedSet):
         AStar.__init__(self, state, goal, heuristic, expander, ProcessingSet)
         self.groupsize = groupsize
+        self.statestore = {}
+
+    def sending_state(self, state):
+        """Convert the state for sending to workers."""
+
+        s, cost, expected, parent = state
+        h = hash(parent)
+        self.statestore[h] = parent
+        return (s, cost, expected, h)
+
+    def receiving_state(self, state):
+        """Convert the state for receiving from workers."""
+
+        s, cost, expected, h = state
+        if isinstance(h, int):
+            return (s, cost, expected, self.statestore[h])
+        elif h == None:
+            return state
+        else:
+            return (s, cost, expected, self.receiving_state(h))
 
     def step_worker(self, pipe, rlock, wlock):
         while True:
@@ -140,6 +160,7 @@ class ServedAStar(AStar):
         while available > 0:
             try:
                 state = self.processing.take()
+                state = self.sending_state(state)
                 pipe.send(state)
                 available -= 1
             except KeyError:
@@ -155,7 +176,7 @@ class ServedAStar(AStar):
             available += 1
             if isinstance(msg, list):
                 for state in msg:
-                    self.processing.add(state)
+                    self.processing.add(self.receiving_state(state))
             else:
                 goal = msg
         return (available, goal)
