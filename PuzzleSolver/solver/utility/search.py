@@ -12,7 +12,7 @@ class DictSortedSet:
         self.open = {}
 
     def add(self, item):
-        state, cost, expected, _ = item # split parts
+        state, cost, expected = item # split parts
 
         if expected not in self.open: # expected cost level
             self.open[expected] = {}
@@ -66,44 +66,54 @@ class AStar:
         self.goal = goal
         self.heuristic = heuristic
         self.expander = expander
-        self.processing = ProcessingSet()
-        self.processing.add((state, 0, self.heuristic(state), None))
+        self.processing = ProcessingSet() # Collects and returns full_state
+        self.parents = {} # maps from minimal_state to (minimal_parent, total cost to child)
+        self.add_state((state, 0, self.heuristic(state)), None)
+
+    def add_state(self, state, parent):
+        """Add state to processing set and parent map. state is full, parent is minimal."""
+
+        self.processing.add(state)
+        s, cost, _2 = state
+        if s in self.parents:
+            p, c = self.parents[s]
+            if cost >= c: # not better parent
+                return
+        self.parents[s] = (parent, cost)
 
     def generate_path(self, state):
+        """Generate the states leading to our goal given a minimal state."""
+
         states = []
         while state != None:
-            s, _1, _2, p = state
-            states.append(s)
-            state = p
+            states.append(state)
+            state, _ = self.parents[state]
         states.reverse()
         return states
 
-    def next_states(self, state=None):
-        """Generate the next states from the current."""
+    def next_states(self, parent):
+        """Generate the next full states from the current full state."""
 
-        if state == None:
-            try:
-                best_full = self.processing.take()
-            except KeyError:
-                return None # Empty processing set
+        (s, cost, _1) = parent
+        if self.goal(s):
+            return s # Got answer
         else:
-            best_full = state
-        (best, cost, _1, _2) = best_full
-        if self.goal(best):
-            return best_full # Got answer
-        else:
-            return [(state, cost+c, cost+c+self.heuristic(state), best_full) for state, c in self.expander(best)]
+            return [(state, cost+c, cost+c+self.heuristic(state)) for state, c in self.expander(s)]
 
     def single_step(self):
-        """Take a single item if possible and expand or return the answer."""
+        """Take a single state from the set if possible and expand or return the answer."""
 
-        states = self.next_states()
+        try:
+            best_full = self.processing.take()
+        except KeyError:
+            return None # Empty processing set
+        states = self.next_states(best_full)
         if isinstance(states, list):
             for n in states:
-                self.processing.add(n)
+                self.add_state(n, best_full[0])
             return bool(states) # did we add new states
         else:
-            return states # could be goal or None
+            return states # goal
 
     def solve(self):
         """Solve the given problem."""
@@ -121,29 +131,6 @@ class ServedAStar(AStar):
     def __init__(self, state, goal, heuristic, expander, groupsize=2, ProcessingSet=DictSortedUniqueSet):
         AStar.__init__(self, state, goal, heuristic, expander, ProcessingSet)
         self.groupsize = groupsize
-        self.statestore = {}
-
-    def sending_state(self, state):
-        """Convert the state for sending to workers."""
-
-        s, cost, expected, parent = state
-        if isinstance(parent, int):
-            return state
-        h = hash(parent)
-        self.statestore[h] = parent
-        return (s, cost, expected, h)
-
-    def receiving_state(self, state):
-        """Convert the state for receiving from workers."""
-
-        s, cost, expected, h = state
-        if isinstance(h, int):
-            p = self.statestore[h]
-            return self.receiving_state((s, cost, expected, p))
-        elif h == None:
-            return state
-        else:
-            return (s, cost, expected, self.receiving_state(h))
 
     def step_worker(self, pipe, rlock, wlock):
         while True:
@@ -153,7 +140,7 @@ class ServedAStar(AStar):
                 return
             next = self.next_states(msg)
             with wlock:
-                pipe.send(next)
+                pipe.send((next, msg[0])) # return states and minimal parent state
 
     def distribute_work(self, pipe, available):
         """Distribute as much work as possible and return number of processes left."""
@@ -161,7 +148,6 @@ class ServedAStar(AStar):
         while available > 0:
             try:
                 state = self.processing.take()
-                state = self.sending_state(state)
                 pipe.send(state)
                 available -= 1
             except KeyError:
@@ -173,11 +159,11 @@ class ServedAStar(AStar):
 
         goal = None
         while pipe.poll():
-            msg = pipe.recv()
+            msg, parent = pipe.recv()
             available += 1
             if isinstance(msg, list):
                 for state in msg:
-                    self.processing.add(state)
+                    self.add_state(state, parent)
             else:
                 goal = msg
         return (available, goal)
@@ -208,7 +194,7 @@ class ServedAStar(AStar):
                 waiting, goal = self.receive_results(server_pipe, waiting)
                 if goal != None:
                     self.stop_processes(server_pipe, waiting)
-                    return self.generate_path(self.receiving_state(goal))
+                    return self.generate_path(goal)
         finally:
             while any(p.is_alive() for p in processes):
                 if server_pipe.poll():
@@ -277,13 +263,75 @@ def ProcessingSetManager(ProcessingSet):
 
     return ProcessingSetManager
 
+
+class ParentMapManager:
+    """Create a class that spawns a new process to control access to the dictionary."""
+
+    def __init__(self):
+        #multiprocessing.current_process.name() # The one to delete with
+        # create server process, add and take become clients
+        self.server_pipe, self.client_pipe = multiprocessing.Pipe()
+        self.lock = multiprocessing.Lock() # Every client locks, then send and wait for receive if necessary, then unlock
+        self.parents = None
+        self.manager = multiprocessing.Process(target=self.server)
+        self.manager.start() # Runs independently and closes on finish()
+
+    def server(self):
+        """Serves items back and forth for client."""
+
+        parents = {}
+        while True:
+            msg = self.server_pipe.recv()
+            if msg == None:
+                self.server_pipe.send(parents)
+                return
+            do, item = msg
+            if do == "contains":
+                self.server_pipe.send(item in parents)
+            elif do == "get":
+                self.server_pipe.send(parents[item])
+            else: # do is from, item is to
+                parents[do] = item
+
+    def finish(self):
+        """Tells the manager to stop and make this act as a normal processing set."""
+
+        with self.lock:
+            self.client_pipe.send(None)
+            self.processing = self.client_pipe.recv()
+            self.manager.join()
+
+    def __contains__(self, item):
+        if self.parents == None:
+            with self.lock:
+                self.client_pipe.send(("contains", item))
+                return self.client_pipe.recv()
+        else:
+            return item in self.parents
+
+    def __getitem__(self, item):
+        if self.parents == None:
+            with self.lock:
+                self.client_pipe.send(("get", item))
+                return self.client_pipe.recv()
+        else:
+            return self.parents[item]
+
+    def __setitem__(self, item, value):
+        if self.parents == None:
+            with self.lock:
+                self.client_pipe.send((item, value))
+        else:
+            self.parents[item] = value
+
+
 class PulledAStar(AStar):
     """Like ServedAStar but processes pull when available rather than being served."""
 
     def __init__(self, state, goal, heuristic, expander, groupsize=2, ProcessingSet=DictSortedUniqueSet):
         AStar.__init__(self, state, goal, heuristic, expander, ProcessingSetManager(ProcessingSet))
         self.groupsize = groupsize
-        self.statestore = {}
+        self.parents = ParentMapManager()
 
     def step_worker(self, itemsleft, wait_protector, finished, item_protector):
         """
@@ -337,5 +385,6 @@ class PulledAStar(AStar):
             proc.join()
 
         self.processing.finish() # kill manager process
+        self.parents.finish()
         # TODO - receive results somehow
         return
