@@ -5,16 +5,23 @@ Helpful search algorithms for use by plugins.
 
 import multiprocessing
 
-class LayeredAStarStorage:
+class UsefulStorage:
+    """Saves implementing certain functions in storage classes."""
+
+    def record(self, state, parent):
+        self.add_state(state)
+        self.add_parent(state)
+
+    def record_all(self, states, parent):
+        for s in states:
+            self.record(s, parent)
+
+class LayeredAStarStorage(UsefulStorage):
     """Orders states using various levels of dicts."""
 
     def __init__(self):
         self.open = {}
         self.parents = {}
-
-    def record(self, state, parent):
-        self.add_state(state)
-        self.add_parent(state, parent)
 
     def add_parent(self, state, parent):
         s, cost, _2 = state
@@ -64,16 +71,12 @@ class UniqueLayeredAStarStorage(LayeredAStarStorage):
         super().add_state(item)
 
 
-class BasicAStarStorage:
+class BasicAStarStorage(UsefulStorage):
     """Uses set for the most basic implementation of our set."""
 
     def __init__(self):
         self.collection = set()
         self.parents = {}
-
-    def record(self, state, parent):
-        self.add_state(state)
-        self.add_parent(state, parent)
 
     def add_parent(self, state, parent):
         s, cost, _2 = state
@@ -128,8 +131,7 @@ class AStar:
             return None # Empty processing set
         states = self.next_states(best_full)
         if isinstance(states, list):
-            for n in states:
-                self.storage.record(n, best_full[0])
+            self.storage.record_all(states, best_full[0])
             return bool(states) # did we add new states
         else:
             return states # goal
@@ -244,7 +246,7 @@ def StorageManager(Storage):
                     self.server_pipe.send(storage)
                     return
                 elif len(msg) == 2:
-                    storage.record(msg[0], msg[1])
+                    storage.record_all(msg[0], msg[1])
                 elif len(msg) == 1:
                     p = storage.parent(msg[0])
                     self.server_pipe.send(p)
@@ -266,9 +268,16 @@ def StorageManager(Storage):
         def record(self, state, parent):
             if self.storage == None:
                 with self.lock:
-                    self.client_pipe.send((state, parent))
+                    self.client_pipe.send(([state], parent))
             else:
                 self.storage.record(state, parent)
+
+        def record_all(self, states, parent):
+            if self.storage == None:
+                with self.lock:
+                    self.client_pipe.send((states, parent))
+            else:
+                self.storage.record_all(states, parent)
 
         def take(self):
             if self.storage == None:
