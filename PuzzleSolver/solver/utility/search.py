@@ -4,13 +4,14 @@ Helpful search algorithms for use by plugins.
 """
 
 import multiprocessing
+import queue
 
 class UsefulStorage:
     """Saves implementing certain functions in storage classes."""
 
     def record(self, state, parent):
         self.add_state(state)
-        self.add_parent(state)
+        self.add_parent(state, parent)
 
     def record_all(self, states, parent):
         for s in states:
@@ -309,7 +310,7 @@ class PulledAStar(AStar):
         AStar.__init__(self, state, goal, heuristic, expander, StorageManager(Storage))
         self.groupsize = groupsize
 
-    def step_worker(self, zombie, has_answer):
+    def step_worker(self, q, zombie, has_answer):
         """
         Keep performing single step until processing set is empty. Should use our remote manager set.
 
@@ -327,24 +328,31 @@ class PulledAStar(AStar):
                     return # all waiting
                 # otherwise continue as before, more items were added
             else:
-                # Goal, TODO: publish this somehow! 
+                q.put(result)
                 has_answer.value += 1
                 zombie.reset()
 
     def solve(self):
         zombie = ZombieLock(self.groupsize)
         has_answer = multiprocessing.Value('i', 0)
+        q = multiprocessing.Queue()
 
-        processes = [multiprocessing.Process(target=self.step_worker, args=(zombie, has_answer)) for _ in range(self.groupsize)]
+        processes = [multiprocessing.Process(target=self.step_worker, args=(q, zombie, has_answer)) for _ in range(self.groupsize)]
         for proc in processes:
             proc.start()
 
         for proc in processes:
             proc.join()
 
+        answer = None
+        try:
+            answer = q.get(False)
+        except queue.Empty:
+            pass
+
         self.storage.finish() # kill manager process
-        # TODO - receive results somehow
-        return
+
+        return None if answer == None else self.generate_path(answer)
 
 class ZombieLock:
     """Allows processes to wait either until all are waiting or all are released."""
