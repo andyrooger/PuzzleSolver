@@ -300,51 +300,33 @@ class PulledAStar(AStar):
         AStar.__init__(self, state, goal, heuristic, expander, StorageManager(Storage))
         self.groupsize = groupsize
 
-    def step_worker(self, itemsleft, wait_protector, finished, item_protector):
+    def step_worker(self, zombie, has_answer):
         """
         Keep performing single step until processing set is empty. Should use our remote manager set.
-
-        itemsleft is an event that is set whenever states are added to our set and cleared whenever they cannot be retreived.
-        wait_protector is a semaphore with initial value of groupsize-1 to allow all but one process to be waiting at once.
-        finished says if we should quit
-        item_protector is a lock so that we can ensure we only clear itemsleft if finished is untrue
-
-        NOT COMPLETELY SAFE, IN RARE CASES WE COULD DO THINGS WE DO NOT MEAN TO!
 
         """
 
         while True:
+            if has_answer.value != 0:
+                return
             result = self.single_step()
             if isinstance(result, bool): # expanded a state
                 if result: # Added a state
-                    itemsleft.set()
+                    zombie.reset()
             elif result == None: # empty state set
-                if wait_protector.acquire(False): # Not all waiting
-                    item_protector.acquire()
-                    if not finished.is_set():
-                        itemsleft.clear()
-                    item_protector.release()
-                    itemsleft.wait()
-                    wait_protector.release()
-                else: # All waiting
-                    finished.set()
-                    itemsleft.set() # to release the waiting processes
+                if zombie.wait():
+                    return # all waiting
+                # otherwise continue as before, more items were added
             else:
                 # Goal, TODO: publish this somehow! 
-                finished.set()
-                itemsleft.set() # to release waiting processes
-
-            if finished.is_set():
-                return
+                has_answer.value += 1
+                zombie.reset()
 
     def solve(self):
-        itemsleft = multiprocessing.Event()
-        itemsleft.set()
-        finished = multiprocessing.Event()
-        wait_protector = multiprocessing.Semaphore(self.groupsize-1)
-        item_protector = multiprocessing.Lock()
+        zombie = ZombieLock(self.groupsize)
+        has_answer = multiprocessing.Value('i', 0)
 
-        processes = [multiprocessing.Process(target=self.step_worker, args=(itemsleft, wait_protector, finished, item_protector)) for _ in range(self.groupsize)]
+        processes = [multiprocessing.Process(target=self.step_worker, args=(zombie, has_answer)) for _ in range(self.groupsize)]
         for proc in processes:
             proc.start()
 
@@ -354,3 +336,39 @@ class PulledAStar(AStar):
         self.storage.finish() # kill manager process
         # TODO - receive results somehow
         return
+
+class ZombieLock:
+    """Allows processes to wait either until all are waiting or all are released."""
+
+    def __init__(self, max):
+        """max is the maximum number of processes that will use our object. If this is wrong we will deadlock or race."""
+
+        self._max = max
+        self._waiting = multiprocessing.Value('i', 0)
+        self._lock = multiprocessing.Lock()
+        self._release = multiprocessing.Event()
+        self._last_release = multiprocessing.Value('i', 0) # 0 for reset, 1 for full
+
+    def reset(self):
+        with self._lock:
+            self._waiting.value = 0
+            self._last_release.value = 0
+            self._release.set()
+            # and awaken threads
+
+    def wait(self):
+        """Wait until all processes are waiting or until reset."""
+
+        with self._lock:
+            self._waiting.value += 1
+            full = (self._waiting.value >= self._max)
+            if full: # no one more can call wait
+                self._last_release.value = 1
+                self._release.set()
+            else:
+                self._release.clear()
+
+        if not full:
+            self._release.wait()
+
+        return self._last_release.value == 1
