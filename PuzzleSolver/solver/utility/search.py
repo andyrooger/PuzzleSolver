@@ -6,6 +6,12 @@ Helpful search algorithms for use by plugins.
 import multiprocessing
 import queue
 
+###############################################################
+#
+# Storage for A* implementations
+#
+###############################################################
+
 class UsefulStorage:
     """Saves implementing certain functions in storage classes."""
 
@@ -91,138 +97,6 @@ class BasicAStarStorage(UsefulStorage):
 
     def parent(self, state):
         return self.parents[state]
-
-BestStorage=UniqueLayeredAStarStorage
-
-class AStar:
-    """Provides an implementation for the A* algorithm."""
-
-    def __init__(self, state, goal, heuristic, expander, Storage=BestStorage):
-        self.goal = goal
-        self.heuristic = heuristic
-        self.expander = expander
-        self.storage = Storage() # Collects and returns full_state
-        self.storage.record((state, 0, self.heuristic(state)), None)
-
-    def generate_path(self, state):
-        """Generate the states leading to our goal given a minimal state."""
-
-        states = []
-        while state != None:
-            states.append(state)
-            state, _ = self.storage.parent(state)
-        states.reverse()
-        return states
-
-    def next_states(self, parent):
-        """Generate the next full states from the current full state."""
-
-        (s, cost, _1) = parent
-        if self.goal(s):
-            return s # Got answer
-        else:
-            return [(state, cost+c, cost+c+self.heuristic(state)) for state, c in self.expander(s)]
-
-    def single_step(self):
-        """Take a single state from the set if possible and expand or return the answer."""
-
-        try:
-            best_full = self.storage.take()
-        except KeyError:
-            return None # Empty processing set
-        states = self.next_states(best_full)
-        if isinstance(states, list):
-            self.storage.record_all(states, best_full[0])
-            return bool(states) # did we add new states
-        else:
-            return states # goal
-
-    def solve(self):
-        """Solve the given problem."""
-
-        while True:
-            result = self.single_step()
-            if result == None:
-                return None
-            elif not isinstance(result, bool):
-                return self.generate_path(result)
-
-class ServedAStar(AStar):
-    """Like AStar but the procesing set becomes a server that serves a new item to processes each time one completes."""
-
-    def __init__(self, state, goal, heuristic, expander, groupsize=2, Storage=BestStorage):
-        AStar.__init__(self, state, goal, heuristic, expander, Storage)
-        self.groupsize = groupsize
-
-    def step_worker(self, pipe, rlock, wlock):
-        while True:
-            with rlock:
-                msg = pipe.recv()
-            if msg == None:
-                return
-            next = self.next_states(msg)
-            with wlock:
-                pipe.send((next, msg[0])) # return states and minimal parent state
-
-    def distribute_work(self, pipe, available):
-        """Distribute as much work as possible and return number of processes left."""
-
-        while available > 0:
-            try:
-                state = self.storage.take()
-                pipe.send(state)
-                available -= 1
-            except KeyError:
-                break
-        return available
-
-    def receive_results(self, pipe, available):
-        """Receive all results and return either goal or None"""
-
-        goal = None
-        while pipe.poll():
-            msg, parent = pipe.recv()
-            available += 1
-            if isinstance(msg, list):
-                for state in msg:
-                    self.storage.record(state, parent)
-            else:
-                goal = msg
-        return (available, goal)
-
-    def stop_processes(self, pipe, available):
-        """Stop running processes."""
-
-        for _ in range(self.groupsize-available):
-            pipe.recv()
-
-        for _ in range(self.groupsize):
-            pipe.send(None)
-
-    def solve(self):
-        try:
-            rlock = multiprocessing.Lock()
-            wlock = multiprocessing.Lock()
-            server_pipe, worker_pipe = multiprocessing.Pipe()
-            waiting = self.groupsize
-            processes = [multiprocessing.Process(target=self.step_worker, args=(worker_pipe, rlock, wlock)) for _ in range(self.groupsize)]
-            for proc in processes:
-                proc.start()
-            while True:
-                waiting = self.distribute_work(server_pipe, waiting)
-                if waiting == self.groupsize:
-                    self.stop_processes(server_pipe, waiting)
-                    return None
-                waiting, goal = self.receive_results(server_pipe, waiting)
-                if goal != None:
-                    self.stop_processes(server_pipe, waiting)
-                    return self.generate_path(goal)
-        finally:
-            while any(p.is_alive() for p in processes):
-                if server_pipe.poll():
-                    server_pipe.recv()
-            server_pipe.close()
-            worker_pipe.close()
 
 def StorageManager(Storage):
     """Create a class that spawns a new process to control the class and acts as a proxy anywhere else."""
@@ -372,6 +246,144 @@ def PreparedStorageManager(Storage):
                 return self.storage.take()
 
     return PreparedStorageManager
+
+BestStorage=UniqueLayeredAStarStorage
+
+###############################################################
+#
+# Actual A* implementations
+#
+###############################################################
+
+class AStar:
+    """Provides an implementation for the A* algorithm."""
+
+    def __init__(self, state, goal, heuristic, expander, Storage=BestStorage):
+        self.goal = goal
+        self.heuristic = heuristic
+        self.expander = expander
+        self.storage = Storage() # Collects and returns full_state
+        self.storage.record((state, 0, self.heuristic(state)), None)
+
+    def generate_path(self, state):
+        """Generate the states leading to our goal given a minimal state."""
+
+        states = []
+        while state != None:
+            states.append(state)
+            state, _ = self.storage.parent(state)
+        states.reverse()
+        return states
+
+    def next_states(self, parent):
+        """Generate the next full states from the current full state."""
+
+        (s, cost, _1) = parent
+        if self.goal(s):
+            return s # Got answer
+        else:
+            return [(state, cost+c, cost+c+self.heuristic(state)) for state, c in self.expander(s)]
+
+    def single_step(self):
+        """Take a single state from the set if possible and expand or return the answer."""
+
+        try:
+            best_full = self.storage.take()
+        except KeyError:
+            return None # Empty processing set
+        states = self.next_states(best_full)
+        if isinstance(states, list):
+            self.storage.record_all(states, best_full[0])
+            return bool(states) # did we add new states
+        else:
+            return states # goal
+
+    def solve(self):
+        """Solve the given problem."""
+
+        while True:
+            result = self.single_step()
+            if result == None:
+                return None
+            elif not isinstance(result, bool):
+                return self.generate_path(result)
+
+class ServedAStar(AStar):
+    """Like AStar but the procesing set becomes a server that serves a new item to processes each time one completes."""
+
+    def __init__(self, state, goal, heuristic, expander, groupsize=2, Storage=BestStorage):
+        AStar.__init__(self, state, goal, heuristic, expander, Storage)
+        self.groupsize = groupsize
+
+    def step_worker(self, pipe, rlock, wlock):
+        while True:
+            with rlock:
+                msg = pipe.recv()
+            if msg == None:
+                return
+            next = self.next_states(msg)
+            with wlock:
+                pipe.send((next, msg[0])) # return states and minimal parent state
+
+    def distribute_work(self, pipe, available):
+        """Distribute as much work as possible and return number of processes left."""
+
+        while available > 0:
+            try:
+                state = self.storage.take()
+                pipe.send(state)
+                available -= 1
+            except KeyError:
+                break
+        return available
+
+    def receive_results(self, pipe, available):
+        """Receive all results and return either goal or None"""
+
+        goal = None
+        while pipe.poll():
+            msg, parent = pipe.recv()
+            available += 1
+            if isinstance(msg, list):
+                for state in msg:
+                    self.storage.record(state, parent)
+            else:
+                goal = msg
+        return (available, goal)
+
+    def stop_processes(self, pipe, available):
+        """Stop running processes."""
+
+        for _ in range(self.groupsize-available):
+            pipe.recv()
+
+        for _ in range(self.groupsize):
+            pipe.send(None)
+
+    def solve(self):
+        try:
+            rlock = multiprocessing.Lock()
+            wlock = multiprocessing.Lock()
+            server_pipe, worker_pipe = multiprocessing.Pipe()
+            waiting = self.groupsize
+            processes = [multiprocessing.Process(target=self.step_worker, args=(worker_pipe, rlock, wlock)) for _ in range(self.groupsize)]
+            for proc in processes:
+                proc.start()
+            while True:
+                waiting = self.distribute_work(server_pipe, waiting)
+                if waiting == self.groupsize:
+                    self.stop_processes(server_pipe, waiting)
+                    return None
+                waiting, goal = self.receive_results(server_pipe, waiting)
+                if goal != None:
+                    self.stop_processes(server_pipe, waiting)
+                    return self.generate_path(goal)
+        finally:
+            while any(p.is_alive() for p in processes):
+                if server_pipe.poll():
+                    server_pipe.recv()
+            server_pipe.close()
+            worker_pipe.close()
 
 
 class PulledAStar(AStar):
