@@ -302,12 +302,83 @@ def StorageManager(Storage):
 
     return StorageManager
 
+def PreparedStorageManager(Storage):
+    """Like StorageManager but prepares for the next take early."""
+
+    class PreparedStorageManager(StorageManager(Storage)):
+        def __init__(self):
+            super().__init__()
+            self.waiting_item = None
+
+        def server(self):
+            """Serves items back and forth for client."""
+
+            storage = Storage()
+            while True:
+                msg = self.server_pipe.recv()
+                if msg == None:
+                    self.server_pipe.send(storage)
+                    return
+                elif len(msg) == 3:
+                    storage.record_all(msg[0], msg[1])
+                    if msg[2]:
+                        self.send_take(storage)
+                elif len(msg) == 1:
+                    p = storage.parent(msg[0])
+                    self.server_pipe.send(p)
+                else: # len(msg) == 0
+                    self.send_take(storage)
+
+        def send_take(self, storage):
+            try:
+                item = storage.take()
+            except KeyError:
+                item = None
+            self.server_pipe.send(item)
+
+        def record(self, state, parent):
+            if self.storage == None:
+                with self.lock:
+                    self.client_pipe.send(([state], parent, False))
+            else:
+                self.storage.record(state, parent)
+
+        def record_all(self, states, parent):
+            if self.storage == None:
+                with self.lock:
+                    self.client_pipe.send((states, parent, True))
+                    new_state = self.client_pipe.recv()
+# Sending back won't work, we shouldn't ever need to though
+#                    if self.waiting_item != None: # if we got one already, send it back
+#                        self.client_pipe.send((new_state], parent))
+                    self.waiting_item = new_state
+            else:
+                self.storage.record_all(states, parent)
+
+        def take(self):
+            if self.storage == None:
+                with self.lock:
+                    if self.waiting_item != None:
+                        item = self.waiting_item
+                        self.waiting_item = None
+                        return item
+                    self.client_pipe.send(())
+                    msg = self.client_pipe.recv()
+                    if msg == None:
+                        raise KeyError
+                    else:
+                        return msg
+            else:
+                return self.storage.take()
+
+    return PreparedStorageManager
+
 
 class PulledAStar(AStar):
     """Like ServedAStar but processes pull when available rather than being served."""
 
     def __init__(self, state, goal, heuristic, expander, groupsize=2, Storage=BestStorage):
-        AStar.__init__(self, state, goal, heuristic, expander, StorageManager(Storage))
+        AStar.__init__(self, state, goal, heuristic, expander, PreparedStorageManager(Storage))
         self.groupsize = groupsize
 
     def step_worker(self, q, zombie, has_answer):
