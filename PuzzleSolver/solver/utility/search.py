@@ -324,13 +324,13 @@ class PulledAStar(AStar):
                 if result: # Added a state
                     zombie.reset()
             elif result == None: # empty state set
-                if zombie.wait():
-                    return # all waiting
+                if zombie.wait() != False:
+                    return # all waiting or goal
                 # otherwise continue as before, more items were added
             else:
                 q.put(result)
                 has_answer.value += 1
-                zombie.reset()
+                zombie.reset(True)
 
     def solve(self):
         zombie = ZombieLock(self.groupsize)
@@ -365,9 +365,12 @@ class ZombieLock:
         self._lock = multiprocessing.Lock()
         self._release = multiprocessing.Event()
         self._last_release = multiprocessing.Value('i', 0) # 0 for reset, 1 for full
+        self._allow_wait = multiprocessing.Value('i', 0) # 0 for allow, 1 for disallow
 
-    def reset(self):
+    def reset(self, final=False):
         with self._lock:
+            if final:
+                self._allow_wait.value = 1
             self._waiting.value = 0
             self._last_release.value = 0
             self._release.set()
@@ -377,6 +380,8 @@ class ZombieLock:
         """Wait until all processes are waiting or until reset."""
 
         with self._lock:
+            if self._allow_wait.value == 1:
+                return None
             self._waiting.value += 1
             full = (self._waiting.value >= self._max)
             if full: # no one more can call wait
