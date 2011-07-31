@@ -310,6 +310,72 @@ class AStar:
             elif not isinstance(result, bool):
                 return self.generate_path(result)
 
+class SymmetricAStar(AStar):
+    """Like other parallel AStar implementations, but all parallel operations have to finish before the next group begin."""
+
+    def __init__(self, state, goal, heuristic, expander, groupsize=2, Storage=BestStorage):
+        AStar.__init__(self, state, goal, heuristic, expander, Storage)
+        self.groupsize = groupsize
+
+    def step_worker(self, pipe, rlock, wlock):
+        while True:
+            with rlock:
+                msg = pipe.recv()
+            if msg == None:
+                return
+            next = self.next_states(msg)
+            with wlock:
+                pipe.send((next, msg[0])) # return states and minimal parent state
+
+    def distribute_work(self, pipe):
+        """Distribute as much work as possible and return number distributed."""
+
+        distributed = 0
+        for _ in range(self.groupsize):
+            try:
+                state = self.storage.take()
+                pipe.send(state)
+                distributed += 1
+            except KeyError:
+                break
+        return distributed
+
+    def receive_results(self, pipe, toreceive):
+        """Receive all results and return either goal or None"""
+
+        goal = None
+        for _ in range(toreceive):
+            msg, parent = pipe.recv()
+            if isinstance(msg, list):
+                self.storage.record_all(msg, parent)
+            else:
+                goal = msg
+        return goal
+
+    def stop_processes(self, pipe):
+        """Stop running processes."""
+
+        for _ in range(self.groupsize):
+            pipe.send(None)
+
+    def solve(self):
+        rlock = multiprocessing.Lock()
+        wlock = multiprocessing.Lock()
+        server_pipe, worker_pipe = multiprocessing.Pipe()
+        processes = [multiprocessing.Process(target=self.step_worker, args=(worker_pipe, rlock, wlock)) for _ in range(self.groupsize)]
+        for proc in processes:
+            proc.start()
+        while True:
+            working = self.distribute_work(server_pipe)
+            if working == 0:
+                self.stop_processes(server_pipe)
+                return None
+            goal = self.receive_results(server_pipe, working)
+            if goal != None:
+                self.stop_processes(server_pipe)
+                return self.generate_path(goal)
+
+
 class ServedAStar(AStar):
     """Like AStar but the procesing set becomes a server that serves a new item to processes each time one completes."""
 
@@ -347,8 +413,7 @@ class ServedAStar(AStar):
             msg, parent = pipe.recv()
             available += 1
             if isinstance(msg, list):
-                for state in msg:
-                    self.storage.record(state, parent)
+                self.storage.record_all(msg, parent)
             else:
                 goal = msg
         return (available, goal)
