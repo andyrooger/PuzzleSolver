@@ -393,34 +393,32 @@ class PulledAStar(AStar):
         AStar.__init__(self, state, goal, heuristic, expander, PreparedStorageManager(Storage))
         self.groupsize = groupsize
 
-    def step_worker(self, q, zombie, has_answer):
+    def step_worker(self, q, idle):
         """
         Keep performing single step until processing set is empty. Should use our remote manager set.
 
         """
 
         while True:
-            if has_answer.value != 0:
+            if not idle.intact():
                 return
             result = self.single_step()
             if isinstance(result, bool): # expanded a state
                 if result: # Added a state
-                    zombie.reset()
+                    idle.reset()
             elif result == None: # empty state set
-                if zombie.wait() != False:
+                if not idle.wait():
                     return # all waiting or goal
                 # otherwise continue as before, more items were added
             else:
                 q.put(result)
-                has_answer.value += 1
-                zombie.reset(True)
+                idle.destroy()
 
     def solve(self):
-        zombie = ZombieLock(self.groupsize)
-        has_answer = multiprocessing.Value('i', 0)
+        idle = IdleLock(self.groupsize)
         q = multiprocessing.Queue()
 
-        processes = [multiprocessing.Process(target=self.step_worker, args=(q, zombie, has_answer)) for _ in range(self.groupsize)]
+        processes = [multiprocessing.Process(target=self.step_worker, args=(q, idle)) for _ in range(self.groupsize)]
         for proc in processes:
             proc.start()
 
@@ -437,43 +435,66 @@ class PulledAStar(AStar):
 
         return None if answer == None else self.generate_path(answer)
 
-class ZombieLock:
-    """Allows processes to wait either until all are waiting or all are released."""
+class IdleLock:
+    """One-use lock that releases when enough processes are idle."""
 
-    def __init__(self, max):
-        """max is the maximum number of processes that will use our object. If this is wrong we will deadlock or race."""
-
-        self._max = max
+    def __init__(self, limit):
+        self._limit = limit
         self._waiting = multiprocessing.Value('i', 0)
-        self._lock = multiprocessing.Lock()
+        self._broken = multiprocessing.Value('i', 0) # 0 good, 1 broken
         self._release = multiprocessing.Event()
-        self._last_release = multiprocessing.Value('i', 0) # 0 for reset, 1 for full
-        self._allow_wait = multiprocessing.Value('i', 0) # 0 for allow, 1 for disallow
+        self._lock = multiprocessing.RLock()
 
-    def reset(self, final=False):
+    def intact(self):
+        """Is this lock intact (True), broken (None) or overflowed (False)?"""
+
         with self._lock:
-            if final:
-                self._allow_wait.value = 1
-            self._waiting.value = 0
-            self._last_release.value = 0
-            self._release.set()
-            # and awaken threads
+            if self._broken.value == 1:
+                return None
+            else:
+                return self._waiting.value < self._limit
+
+    def reset(self):
+        """Release waiting processes and reset the lock."""
+
+        with self._lock:
+            # only works if we haven't already broken or overflowed
+            if self.intact():
+                self._waiting.value = 0
+                self._release.set()
+                return True
+            else:
+                return False
+
+    def destroy(self):
+        """Break the lock so that any waits return immediately."""
+
+        with self._lock:
+            if self.intact():
+                self._broken.value = 1
+                self._release.set()
+                return True
+            else:
+                return False
 
     def wait(self):
-        """Wait until all processes are waiting or until reset."""
+        """Wait on this lock."""
 
         with self._lock:
-            if self._allow_wait.value == 1:
-                return None
+            status = self.intact()
+            if not status:
+                return status
+
             self._waiting.value += 1
-            full = (self._waiting.value >= self._max)
-            if full: # no one more can call wait
-                self._last_release.value = 1
+            if self._waiting.value == self._limit: # exactly limit so release all threads
                 self._release.set()
-            else:
-                self._release.clear()
+                return False # do not reset number, so next wait returns as hit limit
+            if self._waiting.value > self._limit: # more than so immediately release
+                return False
 
-        if not full:
-            self._release.wait()
+            # less than so wait
+            self._release.clear()
 
-        return self._last_release.value == 1
+        self._release.wait()
+
+        return self.intact()
