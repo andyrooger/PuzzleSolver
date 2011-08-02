@@ -3,8 +3,9 @@ Area for playing the Push Puzzle.
 
 """
 
-#import tkinter
-import tkinter.tix
+import tkinter
+
+from solver.utility.scrollable_window import ScrollableWindow
 
 from . import style
 from . puzzle import Puzzle
@@ -12,11 +13,11 @@ from . import pathfinder
 
 KEYCODES = {111: "UP", 116: "DOWN", 113: "LEFT", 114: "RIGHT"}
 
-class PlayArea(tkinter.tix.ScrolledWindow):
+class PlayArea(ScrollableWindow):
     """GUI component for playing push puzzles."""
 
     def __init__(self, master, puzzle, changecb=None):
-        tkinter.tix.ScrolledWindow.__init__(self, master, scrollbar="auto")
+        ScrollableWindow.__init__(self, master)
 
         if not isinstance(puzzle, Puzzle) or not puzzle.valid():
             raise ValueError
@@ -29,6 +30,11 @@ class PlayArea(tkinter.tix.ScrolledWindow):
         self.bind("<Key>", self.keypress)
 
         self.createView()
+        # now all buttons are created we can centre on the player
+        def update_centre(evt=None):
+            x, y = self.puzzle.state().player
+            self.centre_on(self.buttons[y][x])
+        self.bind('<Configure>', update_centre)
 
     def setupTile(self, tile, pos):
         """Setup view for a single tile."""
@@ -36,6 +42,7 @@ class PlayArea(tkinter.tix.ScrolledWindow):
         content = ("WALL" if pos in self.puzzle.walls else "EMPTY")
         if self.puzzle.state().player == pos:
             content = "PLAYER"
+            self.centre_on(tile)
         if pos in self.puzzle.state().boxes:
             content = "BOX"
         target = (pos in self.puzzle.targets)
