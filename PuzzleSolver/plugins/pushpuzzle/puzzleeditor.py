@@ -3,8 +3,7 @@ Editor frame for push puzzle.
 
 """
 
-import os.path
-import tkinter
+#import tkinter
 import tkinter.tix
 
 from . puzzle import Puzzle

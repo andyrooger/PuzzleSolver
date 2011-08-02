@@ -3,7 +3,7 @@ Area for playing the Push Puzzle.
 
 """
 
-import tkinter
+#import tkinter
 import tkinter.tix
 
 from . import style
@@ -94,7 +94,7 @@ class PlayArea(tkinter.tix.ScrolledWindow):
         """Move the player if possible."""
 
         current = self.puzzle.state().player
-        to = self.puzzle.adjacent(self.puzzle.state().player, direction)
+        to = self.puzzle.adjacent(current, direction)
 
         if to == None:
             return False

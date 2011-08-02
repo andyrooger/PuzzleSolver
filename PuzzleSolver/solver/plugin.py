@@ -28,6 +28,9 @@ import tkinter
 class PuzzleType(metaclass=abc.ABCMeta):
     """Entire plugin."""
 
+    def __init__(self):
+        """Just here to avoid complains by PyDev in derived classes."""
+
     @abc.abstractmethod
     def name(self):
         """Get the name of the puzzle type."""
@@ -38,6 +41,9 @@ class PuzzleType(metaclass=abc.ABCMeta):
 
 class PuzzleView(metaclass=abc.ABCMeta):
     """Functionality for a single mode."""
+
+    def __init__(self):
+        """Here to avoid complaints in subclasses."""
 
     @abc.abstractmethod
     def getFrame(self, master):
@@ -77,6 +83,9 @@ class PuzzleView(metaclass=abc.ABCMeta):
 
 class Solver(metaclass=abc.ABCMeta):
     """Functionality for a puzzle solver, changed will be performed on the underlying view."""
+
+    def __init__(self):
+        """Avoids complaints from subclasses."""
 
     @abc.abstractmethod
     def start(self):

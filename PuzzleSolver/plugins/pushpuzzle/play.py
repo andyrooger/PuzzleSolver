@@ -4,7 +4,6 @@ View for Push Puzzle playing.
 """
 
 import tkinter
-import os.path
 
 import solver.plugin
 from solver.utility.simpleframe import SimpleFrame

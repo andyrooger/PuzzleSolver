@@ -21,7 +21,7 @@ Contains the main window for the puzzle solver.
 #     You should have received a copy of the GNU General Public License
 #     along with PuzzleSolver.  If not, see <http://www.gnu.org/licenses/>.
 
-import tkinter
+#import tkinter
 import tkinter.tix
 
 import solver.state
@@ -31,7 +31,6 @@ from . puzzlechoice import PuzzleChoice
 from . modechoice import ModeChoice
 from . solverbutton import SolverButton
 from . viewframe import ViewFrame
-from . puzzlesaver import PuzzleSaver
 
 class SolverGUI(tkinter.Frame):
     """Main window for the puzzle solver."""
