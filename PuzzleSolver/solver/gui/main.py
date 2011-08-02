@@ -3,7 +3,7 @@ Contains the main window for the puzzle solver.
 
 """
 
-import tkinter
+#import tkinter
 import tkinter.tix
 
 import solver.state
@@ -13,7 +13,6 @@ from . puzzlechoice import PuzzleChoice
 from . modechoice import ModeChoice
 from . solverbutton import SolverButton
 from . viewframe import ViewFrame
-from . puzzlesaver import PuzzleSaver
 
 class SolverGUI(tkinter.Frame):
     """Main window for the puzzle solver."""

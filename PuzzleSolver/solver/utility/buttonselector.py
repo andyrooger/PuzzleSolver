@@ -60,5 +60,5 @@ class ButtonSelector(tkinter.Frame):
 
     def setEnabled(self, enabled):
         state = tkinter.NORMAL if enabled else tkinter.DISABLED
-        for b, i in self.buttons:
+        for b, _ in self.buttons:
             b.configure(state=state)

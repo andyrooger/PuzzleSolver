@@ -43,7 +43,7 @@ class LayeredAStarStorage(UsefulStorage):
         self.parents[s] = (parent, cost)
 
     def add_state(self, item):
-        state, cost, expected = item # split parts
+        _, cost, expected = item # split parts
 
         if expected not in self.open: # expected cost level
             self.open[expected] = {}

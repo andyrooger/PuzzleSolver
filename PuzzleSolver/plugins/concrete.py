@@ -132,7 +132,7 @@ class ConcreteSolver(solver.plugin.Solver):
         self.status.after(10, self.poll)
 
     def solve(self):
-        for i in range(10):
+        for _ in range(10):
             self.queue.put("RED")
             time.sleep(0.5)
             self.queue.put("ORANGE")
