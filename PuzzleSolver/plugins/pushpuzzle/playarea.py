@@ -32,6 +32,7 @@ class PlayArea(ScrollableWindow):
         self.createView()
         # now all buttons are created we can centre on the player
         def update_centre(evt=None):
+            self.update_idletasks()
             x, y = self.puzzle.state().player
             self.centre_on(self.buttons[y][x])
         self.bind('<Configure>', update_centre)
