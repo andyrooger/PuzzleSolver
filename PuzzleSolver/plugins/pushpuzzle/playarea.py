@@ -8,6 +8,7 @@ import tkinter.tix
 
 from . import style
 from . puzzle import Puzzle
+from . import pathfinder
 
 KEYCODES = {111: "UP", 116: "DOWN", 113: "LEFT", 114: "RIGHT"}
 
@@ -22,6 +23,7 @@ class PlayArea(tkinter.tix.ScrolledWindow):
 
         self.puzzle = puzzle
         self.changecb = changecb or (lambda: None)
+        self.automover_cb = None
 
         self.focus_set()
         self.bind("<Key>", self.keypress)
@@ -68,27 +70,49 @@ class PlayArea(tkinter.tix.ScrolledWindow):
     def clicked(self, pos):
         """One of the tiles has been clicked."""
 
+        self.automove([])
+
         player = self.puzzle.state().player
         dist = abs(pos[0] - player[0]) + abs(pos[1] - player[1])
         if dist == 1: # adjacent
             if pos[0] < player[0]:
-                self.move("LEFT")
+                self.automove(["LEFT"])
             elif pos[0] > player[0]:
-                self.move("RIGHT")
+                self.automove(["RIGHT"])
             elif pos[1] < player[1]:
-                self.move("UP")
+                self.automove(["UP"])
             elif pos[1] > player[1]:
-                self.move("DOWN")
+                self.automove(["DOWN"])
             return
 
-        if pos in self.puzzle.state().accessible:
-            return # TODO - implement path finding
+        # Try long path find, will be None if not accessible
+        # Don't worry about blocking, should be fast and we don't want the user to interact in between
+        path = pathfinder.find_path(self.puzzle.state(), pos)
+        self.automove(path or [])
 
     def keypress(self, evt):
         """A key has been pressed."""
 
         if evt.keycode in KEYCODES:
-            self.move(KEYCODES[evt.keycode])
+            self.automove([KEYCODES[evt.keycode]])
+
+    def automove(self, directions):
+        """Keep calling move at regular intervals until the list is completed."""
+        
+        if self.automover_cb != None:
+            self.after_cancel(self.automover_cb)
+        if directions:
+            directions.reverse()
+            self._automover(directions)
+        
+    def _automover(self, directions):
+        """Performs the given moves at regular intervals."""
+        
+        dir = directions.pop()
+        self.move(dir)
+        
+        if directions:
+            self.automover_cb = self.after(100, self._automover, directions)
 
     def move(self, direction):
         """Move the player if possible."""

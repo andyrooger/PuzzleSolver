@@ -144,7 +144,7 @@ class PuzzleState:
     def goal(self):
         """Have we achieved our goal?"""
 
-        return self.parent.targets.difference(self.boxes)
+        return bool(self.parent.targets.difference(self.boxes))
 
     def copy(self):
         """Return an identical copy to this state, but not finalised."""
