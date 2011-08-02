@@ -31,10 +31,8 @@ class ScrollableWindow(tkinter.Canvas):
         self.window.bind('<Configure>', self._frame_resized)
         self.scroller.create_window(0, 0, anchor="nw", window=self.window)
         
-        self.window.update_idletasks()
-        self._frame_resized()
-        
     def _frame_resized(self, event=None):
+        self.update_idletasks()
         self.scroller.config(scrollregion=self.scroller.bbox("all"))
         
     def centre_on(self, widget, x=None, y=None):
