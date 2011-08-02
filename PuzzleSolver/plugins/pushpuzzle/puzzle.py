@@ -120,26 +120,28 @@ class PuzzleState:
 
     def recordAccessibility(self):
         """Create and record a set describing accessible coordinates from this state."""
+        
+        if self.player == None:
+            self.accessible = set()
+            return
 
-        self.accessible = set()
-        if self.player != None:
-            self._expandAccessible(self.player)
-
-    def _expandAccessible(self, pos):
-        """Open up accessibility from the position pos."""
-
-        if (self.parent.inArea(*pos) and
-            pos not in self.accessible and
-            pos not in self.parent.walls and
-            pos not in self.boxes):
-
-            self.accessible.add(pos)
-
+        accessible = set()
+        # In an attempt to avoid hitting recursion limit
+        tocheck = [self.player]
+        while tocheck:
+            pos = tocheck.pop()
+            if not self.parent.inArea(*pos):
+                continue
+            if pos in accessible:
+                continue
+            if pos in self.parent.walls:
+                continue
+            if pos in self.boxes:
+                continue
+            accessible.add(pos)
             x, y = pos
-            self._expandAccessible((x-1, y))
-            self._expandAccessible((x+1, y))
-            self._expandAccessible((x, y-1))
-            self._expandAccessible((x, y+1))
+            tocheck += [(x-1,y), (x+1,y), (x,y-1), (x,y+1)]
+        self.accessible = accessible
 
     def goal(self):
         """Have we achieved our goal?"""
