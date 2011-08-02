@@ -68,7 +68,21 @@ class PlayArea(tkinter.tix.ScrolledWindow):
     def clicked(self, pos):
         """One of the tiles has been clicked."""
 
-        print("Clicked " + str(pos))
+        player = self.puzzle.state().player
+        dist = abs(pos[0] - player[0]) + abs(pos[1] - player[1])
+        if dist == 1: # adjacent
+            if pos[0] < player[0]:
+                self.move("LEFT")
+            elif pos[0] > player[0]:
+                self.move("RIGHT")
+            elif pos[1] < player[1]:
+                self.move("UP")
+            elif pos[1] > player[1]:
+                self.move("DOWN")
+            return
+
+        if pos in self.puzzle.state().accessible:
+            return # TODO - implement path finding
 
     def keypress(self, evt):
         """A key has been pressed."""
