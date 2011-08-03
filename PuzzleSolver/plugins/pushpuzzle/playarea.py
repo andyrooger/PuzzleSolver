@@ -27,6 +27,7 @@ class PlayArea(ScrollableWindow):
         self.puzzle = puzzle
         self.changecb = changecb or (lambda: None)
         self.automover_cb = None
+        self.frozen = False
 
         self.focus_set()
         self.bind("<Key>", self.keypress)
@@ -80,6 +81,9 @@ class PlayArea(ScrollableWindow):
     def clicked(self, pos):
         """One of the tiles has been clicked."""
 
+        if self.frozen:
+            return
+
         self.automove([])
 
         player = self.puzzle.state().player
@@ -102,6 +106,9 @@ class PlayArea(ScrollableWindow):
 
     def keypress(self, evt):
         """A key has been pressed."""
+
+        if self.frozen:
+            return
 
         if evt.keycode in KEYCODES:
             self.automove([KEYCODES[evt.keycode]])
@@ -165,6 +172,9 @@ class PlayArea(ScrollableWindow):
             if self.puzzle.state().goal():
                 messagebox.showinfo("Congratulations", "Well done, you completed the puzzle!")
         return True
+
+    def freeze(self, frozen):
+        self.frozen = frozen
 
     def rewind(self):
         """Go to the beginning of the play area."""

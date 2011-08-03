@@ -10,6 +10,7 @@ from solver.utility.simpleframe import SimpleFrame
 
 from . import style
 from . playarea import PlayArea
+from . pushsolver import PushSolver
 
 class PlayView(solver.plugin.PuzzleView):
     """Functionality for Push Puzzle playing."""
@@ -22,8 +23,11 @@ class PlayView(solver.plugin.PuzzleView):
         self.frame = PlaceholderPlayFrame(master)
         return self.frame
 
-    def canSolve(self): return False
-    def getSolver(self): return None
+    def canSolve(self):
+        return self.frame.canSolve()
+    
+    def getSolver(self):
+        return self.frame.getSolver()
 
     def getExtension(self):
         return ".spp"
@@ -53,6 +57,15 @@ class PlaceholderPlayFrame(SimpleFrame):
 
     def puzzleLoaded(self):
         return isinstance(self.content, PlayFrame)
+
+    def canSolve(self):
+        return self.puzzleLoaded()
+
+    def getSolver(self):
+        if self.puzzleLoaded():
+            return self.content.getSolver()
+        else:
+            return None
 
     def changed(self):
         return self.content.changed() if self.puzzleLoaded() else False
@@ -119,6 +132,9 @@ class PlayFrame(tkinter.Frame):
         info = self.playarea.metrics()
         self.status["text"] = "Targets: %(filled)s/%(targets)s  -  Moves: %(move)s/%(total)s" % info
 
+    def getSolver(self):
+        return PushSolver(self.freeze)
+
     def changed(self):
         return self._changed
 
@@ -137,4 +153,11 @@ class PlayFrame(tkinter.Frame):
 
         self._changed = True
         self.controlState()
-
+        
+    def freeze(self, frozen):
+        if frozen:
+            self.prevarrow.config(state=tkinter.DISABLED)
+            self.nextarrow.config(state=tkinter.DISABLED)
+        else:
+            self.controlState()
+        self.playarea.freeze(frozen)
