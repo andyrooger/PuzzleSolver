@@ -14,7 +14,7 @@ class Puzzle:
         self.states = [PuzzleState(self)]
         self.curstate = 0
 
-    def inArea(self, x, y):
+    def in_area(self, x, y):
         """Are the given coordinates within our range?"""
 
         if x < 0 or x >= self.width:
@@ -40,7 +40,7 @@ class Puzzle:
     def valid(self, children=True):
         """Is this a valid setup?"""
 
-        if not all(self.inArea(x, y) for x, y in self.walls.union(self.targets)):
+        if not all(self.in_area(x, y) for x, y in self.walls.union(self.targets)):
             return False
 
         if children and not all(s.valid() for s in self.states):
@@ -71,10 +71,19 @@ class Puzzle:
             self.curstate = cur
         return self.curstate
 
-    def addState(self):
-        """Add a new state identical to the current after our current state and remove any following."""
+    def add_state(self, player=None):
+        """
+        Add a new state identical to the current after our current state and remove any following.
+        
+        If not done already, the current state is finalised. If player is given then the new state
+        will be finalised and the only change will be the player. Otherwise it will be left
+        unfinalised.
+        
+        """
 
-        self.states[self.curstate+1:] = [self.state().copy()]
+        self.state().finalise()
+
+        self.states[self.curstate+1:] = [self.state().copy(player)]
         self.curstate = len(self)-1
 
     def __len__(self):
@@ -97,17 +106,19 @@ class PuzzleState:
             raise ValueError("Cannot edit a finalised puzzle state.")
 
     def finalise(self):
+        if self.finalised:
+            return
         self.recordAccessibility()
         self.finalised = True
 
     def valid(self):
-        if self.player == None or not self.parent.inArea(*self.player):
+        if self.player == None or not self.parent.in_area(*self.player):
             return False
 
         if len(self.boxes) != len(self.parent.targets):
             return False
 
-        if not all(self.parent.inArea(x, y) for (x, y) in self.boxes):
+        if not all(self.parent.in_area(x, y) for (x, y) in self.boxes):
             return False
 
         if self.player in self.parent.walls.union(self.boxes):
@@ -130,7 +141,7 @@ class PuzzleState:
         tocheck = [self.player]
         while tocheck:
             pos = tocheck.pop()
-            if not self.parent.inArea(*pos):
+            if not self.parent.in_area(*pos):
                 continue
             if pos in accessible:
                 continue
@@ -148,10 +159,36 @@ class PuzzleState:
 
         return bool(self.parent.targets.difference(self.boxes))
 
-    def copy(self):
-        """Return an identical copy to this state, but not finalised."""
+    def copy(self, player=None):
+        """
+        Return an identical copy of this state.
+        
+        If we have not finalised this state first we will copy everything and
+        possibly replace player. This could take up more memory than necessary.
+        Otherwise:
+        
+        With no arguments this will return an identical but unfinalised
+        version (so no 'accessible' attribute). This is best before big alterations
+        of the state.
+        
+        If only the player should be changed then provide this as an argument and
+        the new state will be efficiently finalised.
+        
+        """
 
         p = PuzzleState(self.parent)
-        p.player = self.player
-        p.boxes = self.boxes.copy()
+        if not self.finalised:
+            p.player = player or self.player
+            p.boxes = self.boxes.copy()
+        elif player == None: # Don't finalise
+            p.player = self.player
+            p.boxes = self.boxes.copy()
+        else: # finalise
+            p.player = player
+            p.boxes = self.boxes
+            if player in self.accessible:
+                p.accessible = self.accessible
+                p.finalised = True
+            else:
+                p.finalise()
         return p

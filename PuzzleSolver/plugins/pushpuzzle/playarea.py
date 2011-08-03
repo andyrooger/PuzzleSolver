@@ -142,12 +142,14 @@ class PlayArea(ScrollableWindow):
             if boxto in self.puzzle.state().boxes or boxto in self.puzzle.walls: # box moving into resistance
                 return False
 
-        self.puzzle.addState()
-        if boxto != None:
+        if boxto == None:
+            self.puzzle.add_state(to)
+        else:
+            self.puzzle.add_state()
             self.puzzle.state().boxes.remove(to)
             self.puzzle.state().boxes.add(boxto)
-        self.puzzle.state().player = to
-        self.puzzle.state().finalise()
+            self.puzzle.state().player = to
+            self.puzzle.state().finalise()
         self.updateView()
         self.changecb()
         return True
