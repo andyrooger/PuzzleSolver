@@ -21,19 +21,22 @@ class ScrollableWindow(tkinter.Canvas):
         self.scroller = tkinter.Canvas(self,
                                        yscrollcommand=self.vscrollbar.set,
                                        xscrollcommand=self.hscrollbar.set)
-        self.scroller.grid(row=0, column=0, sticky="nsew")
         self.vscrollbar.config(command=self.scroller.yview)
         self.hscrollbar.config(command=self.scroller.xview)
 
         self.window = tkinter.Frame(self.scroller)
-        self.window.grid(row=0, column=0)
-        
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.window.grid()
         self.window.bind('<Configure>', self._frame_resized)
+        
         self.scroller.create_window(0, 0, anchor="nw", window=self.window)
+        self.scroller.grid(row=0, column=0)#, sticky="nsew")
         
     def _frame_resized(self, event=None):
-        self.update_idletasks()
-        self.scroller.config(scrollregion=self.scroller.bbox("all"))
+        self.window.update_idletasks()
+        _1, _2, w, h = self.scroller.bbox("all")
+        self.scroller.config(scrollregion=self.scroller.bbox("all"), width=w, height=h)
         
     def centre_on(self, widget, x=None, y=None):
         """Centre the window on the given position within the widget. (MUST be an ancestor of window)"""
