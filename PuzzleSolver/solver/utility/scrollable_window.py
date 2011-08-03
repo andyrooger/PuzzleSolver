@@ -5,11 +5,11 @@ Scrollable window designed to replace tix.ScrolledWindow but programatically scr
 
 import tkinter
 
-class ScrollableWindow(tkinter.Canvas):
+class ScrollableWindow(tkinter.Frame):
     """Replacement for ScrolledWindow."""
     
     def __init__(self, master):
-        tkinter.Canvas.__init__(self, master)
+        tkinter.Frame.__init__(self, master)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         
@@ -27,11 +27,11 @@ class ScrollableWindow(tkinter.Canvas):
         self.window = tkinter.Frame(self.scroller)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        self.window.grid()
+        self.window.grid(sticky="nsew")
         self.window.bind('<Configure>', self._frame_resized)
         
         self.scroller.create_window(0, 0, anchor="nw", window=self.window)
-        self.scroller.grid(row=0, column=0)#, sticky="nsew")
+        self.scroller.grid(row=0, column=0)
         
     def _frame_resized(self, event=None):
         self.window.update_idletasks()
