@@ -5,6 +5,8 @@ Area for playing the Push Puzzle.
 
 import tkinter
 
+from tkinter import messagebox
+
 from solver.utility.scrollable_window import ScrollableWindow
 
 from . import style
@@ -150,8 +152,15 @@ class PlayArea(ScrollableWindow):
             self.puzzle.state().boxes.add(boxto)
             self.puzzle.state().player = to
             self.puzzle.state().finalise()
+            
         self.updateView()
         self.changecb()
+        
+        
+        # don't actually need first if, but saves checking completely for goal
+        if boxto in self.puzzle.targets:
+            if self.puzzle.state().goal():
+                messagebox.showinfo("Congratulations", "Well done, you completed the puzzle!")
         return True
 
     def rewind(self):
@@ -194,6 +203,8 @@ class PlayArea(ScrollableWindow):
         """Return useful info about the puzzle state."""
 
         return {
-            "move": self.puzzle.cursor(),
-            "total": len(self.puzzle)
+            "move": self.puzzle.cursor()+1,
+            "total": len(self.puzzle),
+            "targets": len(self.puzzle.targets),
+            "filled": len(self.puzzle.targets.intersection(self.puzzle.state().boxes))
         }

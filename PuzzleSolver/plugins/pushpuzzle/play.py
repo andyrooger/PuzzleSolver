@@ -117,7 +117,7 @@ class PlayFrame(tkinter.Frame):
         ))
 
         info = self.playarea.metrics()
-        self.status["text"] = "Current Move " + str(info["move"]+1) + " / " + str(info["total"]) + " Total Moves"
+        self.status["text"] = "Targets: %(filled)s/%(targets)s  -  Moves: %(move)s/%(total)s" % info
 
     def changed(self):
         return self._changed
