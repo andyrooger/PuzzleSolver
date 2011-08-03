@@ -127,6 +127,9 @@ class PlayArea(ScrollableWindow):
     def move(self, direction):
         """Move the player if possible."""
 
+        if self.puzzle.state().goal():
+            return
+
         current = self.puzzle.state().player
         to = self.puzzle.adjacent(current, direction)
 
@@ -166,12 +169,14 @@ class PlayArea(ScrollableWindow):
     def rewind(self):
         """Go to the beginning of the play area."""
 
+        self.automove([])
         self.puzzle.cursor(0)
         self.updateView()
 
     def next(self):
         """Go to the next state. Return whether successful."""
-
+        
+        self.automove([])
         try:
             self.puzzle.cursor(self.puzzle.cursor()+1)
             self.updateView()
@@ -187,6 +192,7 @@ class PlayArea(ScrollableWindow):
     def prev(self):
         """Go to previous state. Returns whether successful."""
 
+        self.automove([])
         try:
             self.puzzle.cursor(self.puzzle.cursor()-1)
             self.updateView()
