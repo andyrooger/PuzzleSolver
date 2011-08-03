@@ -3,11 +3,11 @@ Editor frame for push puzzle.
 
 """
 
-#import tkinter
-import tkinter.tix
+import tkinter
 
 from . puzzle import Puzzle
 from solver.utility.buttonselector import ButtonSelector
+from solver.utility.scrollable_window import ScrollableWindow
 from . import style
 
 EDIT_MODES = ["EMPTY", "WALL", "TARGET", "BOX", "PLAYER"]
@@ -35,11 +35,11 @@ class PuzzleEditor(tkinter.Frame):
     def changed(self):
         return self.creation.changed()
 
-class CreationArea(tkinter.tix.ScrolledWindow):
+class CreationArea(ScrollableWindow):
     """Creation area, containing scrolled grid of tiles."""
 
     def __init__(self, master, puzzle, getmode=None):
-        tkinter.tix.ScrolledWindow.__init__(self, master, scrollbar="auto")
+        ScrollableWindow.__init__(self, master)
 
         if not isinstance(puzzle, Puzzle):
             raise ValueError("Type is not a puzzle: " + puzzle.__class__.__name__)
