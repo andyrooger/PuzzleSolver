@@ -157,7 +157,7 @@ class PuzzleState:
     def goal(self):
         """Have we achieved our goal?"""
 
-        return bool(self.parent.targets.difference(self.boxes))
+        return self.parent.targets == self.boxes
 
     def copy(self, player=None):
         """
