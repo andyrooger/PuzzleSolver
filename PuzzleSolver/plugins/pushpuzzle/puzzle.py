@@ -11,8 +11,8 @@ class Puzzle:
         self.width = w
         self.walls = set()
         self.targets = set()
-        self.states = [PuzzleState(self)]
-        self.curstate = 0
+        self._states = [PuzzleState(self)]
+        self._curstate = 0
 
     def in_area(self, x, y):
         """Are the given coordinates within our range?"""
@@ -43,13 +43,13 @@ class Puzzle:
         if not all(self.in_area(x, y) for x, y in self.walls.union(self.targets)):
             return False
 
-        if children and not all(s.valid() for s in self.states):
+        if children and not all(s.valid() for s in self._states):
             return False
 
         if self.walls.intersection(self.targets):
             return False
 
-        if children and not all(len(self.states[0].boxes) == len(s.boxes) for s in self.states):
+        if children and not all(len(self._states[0].boxes) == len(s.boxes) for s in self._states):
             return False
 
         return True
@@ -57,19 +57,19 @@ class Puzzle:
     def initial(self):
         """Get the initial puzzle state."""
 
-        return self.states[0]
+        return self._states[0]
 
     def state(self):
         """Get the current puzzle state."""
 
-        return self.states[self.curstate]
+        return self._states[self._curstate]
 
     def cursor(self, cur=None):
         if cur != None:
             if cur < 0 or cur >= len(self):
                 raise IndexError
-            self.curstate = cur
-        return self.curstate
+            self._curstate = cur
+        return self._curstate
 
     def add_state(self, player=None):
         """
@@ -83,11 +83,11 @@ class Puzzle:
 
         self.state().finalise()
 
-        self.states[self.curstate+1:] = [self.state().copy(player)]
-        self.curstate = len(self)-1
+        self._states[self.curstate+1:] = [self.state().copy(player)]
+        self._curstate = len(self)-1
 
     def __len__(self):
-        return len(self.states)
+        return len(self._states)
 
 class PuzzleState:
     """Information on parts of the puzzle that can change during the play."""
@@ -108,7 +108,7 @@ class PuzzleState:
     def finalise(self):
         if self.finalised:
             return
-        self.recordAccessibility()
+        self._record_accessibility()
         self.finalised = True
 
     def valid(self):
@@ -129,7 +129,7 @@ class PuzzleState:
 
         return True
 
-    def recordAccessibility(self):
+    def _record_accessibility(self):
         """Create and record a set describing accessible coordinates from this state."""
         
         if self.player == None:
