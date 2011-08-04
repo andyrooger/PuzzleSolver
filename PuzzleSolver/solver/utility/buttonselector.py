@@ -13,17 +13,19 @@ class ButtonSelector(tkinter.Frame):
         tkinter.Frame.__init__(self, master)
 
         self._selected = None
-        self.buttons = set()
-        self.cb_selected = selected
+        self._buttons = set()
+        self._cb_selected = selected
 
-        self.vertical = vertical
+        self._vertical = vertical
         if vertical:
             self.grid_columnconfigure(0, weight=1)
         else:
             self.grid_rowconfigure(0, weight=1)
 
     def _select(self, item):
-        for b, i in self.buttons:
+        """Set the visible state of the selector."""
+        
+        for b, i in self._buttons:
             if i is item:
                 b.config(relief=tkinter.SUNKEN)
             else:
@@ -39,26 +41,30 @@ class ButtonSelector(tkinter.Frame):
         return self._selected
 
     def add(self, text, item, icon=None):
+        """Add an button to the selector."""
+        
         def callback():
             haschanged = (item != self.selection())
             self.selection(item)
-            if self.cb_selected and haschanged:
-                self.cb_selected(item)
+            if self._cb_selected and haschanged:
+                self._cb_selected(item)
 
         dims = self.grid_size()
-        dims = dims[1] if self.vertical else dims[0]
+        dims = dims[1] if self._vertical else dims[0]
         btn = tkinter.Button(self, text=text, image=icon, command=callback)
         if icon != None:
             Balloon(self.winfo_toplevel()).bind_widget(btn, msg=text)
-        if self.vertical:
+        if self._vertical:
             self.grid_rowconfigure(dims, weight=1)
             btn.grid(row=dims, column=0, sticky="nsew")
         else:
             self.grid_columnconfigure(dims, weight=1)
             btn.grid(row=0, column=dims, sticky="nsew")
-        self.buttons.add((btn, item))
+        self._buttons.add((btn, item))
 
-    def setEnabled(self, enabled):
+    def set_enabled(self, enabled):
+        """Enable or disable the selector."""
+        
         state = tkinter.NORMAL if enabled else tkinter.DISABLED
-        for b, _ in self.buttons:
+        for b, _ in self._buttons:
             b.configure(state=state)

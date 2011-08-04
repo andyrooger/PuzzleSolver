@@ -18,20 +18,17 @@ class PuzzleChoice(tkinter.Frame):
         self.grid_rowconfigure(1, weight=1)
         tkinter.Label(self, text="Choose a puzzle type:").grid(row=0, sticky="new")
 
-        self.selector = ButtonSelector(self, vertical=True, selected=self.changePuzzle)
+        self._selector = ButtonSelector(self, vertical=True, selected=self._change_puzzle)
         for plugin in solver.state.puzzle.allowable:
             if plugin != None:
-                self.selector.add(plugin.name(), plugin)
-        self.selector.grid(row=1, sticky="nsew")
+                self._selector.add(plugin.name(), plugin)
+        self._selector.grid(row=1, sticky="nsew")
 
-        solver.state.puzzle.onChange(self.setSelected)
+        solver.state.puzzle.on_change(self._selector.selection)
 
-    def changePuzzle(self, puzzle):
+    def _change_puzzle(self, puzzle):
         if solver.state.puzzle.change(None):
             solver.state.mode.change("CREATE")
             solver.state.puzzle.change(puzzle)
         else:
-            self.selector.selection(solver.state.puzzle.value())
-
-    def setSelected(self, puzzle):
-        self.selector.selection(puzzle)
+            self._selector.selection(solver.state.puzzle.value())

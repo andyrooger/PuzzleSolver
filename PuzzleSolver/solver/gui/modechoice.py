@@ -17,20 +17,20 @@ class ModeChoice(tkinter.Frame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.selector = ButtonSelector(self, selected=self.changeMode)
+        self._selector = ButtonSelector(self, selected=self._change_mode)
         for mode in solver.state.mode.allowable:
-            self.selector.add(mode.title(), mode)
-        self.selector.grid(sticky="nsew")
+            self._selector.add(mode.title(), mode)
+        self._selector.grid(sticky="nsew")
 
-        solver.state.puzzle.onChange(self.puzzleChosen)
-        solver.state.mode.onChange(self.modeChosen)
+        solver.state.puzzle.on_change(self._puzzle_chosen)
+        solver.state.mode.on_change(self._mode_chosen)
 
-    def puzzleChosen(self, puzzle):
-        self.selector.setEnabled(puzzle != None)
+    def _puzzle_chosen(self, puzzle):
+        self._selector.set_enabled(puzzle != None)
 
-    def modeChosen(self, mode):
-        self.selector.selection(mode)
+    def _mode_chosen(self, mode):
+        self._selector.selection(mode)
 
-    def changeMode(self, mode):
+    def _change_mode(self, mode):
         if not solver.state.mode.change(mode):
-            self.selector.selection(solver.state.mode.value())
+            self._selector.selection(solver.state.mode.value())

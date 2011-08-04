@@ -18,22 +18,22 @@ class PuzzleEditor(tkinter.Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        self.modeselect = ButtonSelector(self)
+        self._modeselect = ButtonSelector(self)
         for mode in EDIT_MODES:
-            self.modeselect.add("Edit " + mode.title(), mode, style.loadIcon(mode))
-        self.modeselect.grid(sticky="nsew", row=1, column=0)
+            self._modeselect.add("Edit " + mode.title(), mode, style.load_icon(mode))
+        self._modeselect.grid(sticky="nsew", row=1, column=0)
 
-        self.creation = CreationArea(self, puzzle, getmode=self.modeselect.selection)
-        self.creation.grid(sticky="nsew", row=0, column=0)
+        self._creation = CreationArea(self, puzzle, getmode=self._modeselect.selection)
+        self._creation.grid(sticky="nsew", row=0, column=0)
 
-    def getPuzzle(self):
-        return self.creation.getPuzzle()
+    def get_puzzle(self):
+        return self._creation.get_puzzle()
 
     def saved(self):
-        self.creation.saved()
+        self._creation.saved()
 
     def changed(self):
-        return self.creation.changed()
+        return self._creation.changed()
 
 class CreationArea(ScrollableWindow):
     """Creation area, containing scrolled grid of tiles."""
@@ -46,17 +46,17 @@ class CreationArea(ScrollableWindow):
 
         self._changed = True
 
-        self.getmode = getmode
-        self.buttons = []
+        self._getmode = getmode
+        self._buttons = []
         for y in range(puzzle.height):
             row = []
             for x in range(puzzle.width):
                 pos = (x, y)
-                p = PuzzleTile(self.window, pos, clicked=self.click)
+                p = PuzzleTile(self.window, pos, clicked=self._click)
                 row.append(p)
                 p.grid(sticky="nsew", row=y, column=x)
-            self.buttons.append(row)
-        self.setContent(puzzle)
+            self._buttons.append(row)
+        self._update_tiles(puzzle)
 
     def saved(self):
         self._changed = False
@@ -64,39 +64,39 @@ class CreationArea(ScrollableWindow):
     def changed(self):
         return self._changed
 
-    def setContent(self, puzzle):
+    def _update_tiles(self, puzzle):
         """Tell each tile what their content should be."""
 
-        self.player = puzzle.initial().player
+        self._player = puzzle.initial().player
 
         for x,y in puzzle.walls:
-            self.buttons[y][x].content("WALL")
+            self._buttons[y][x].content("WALL")
         for x,y in puzzle.targets:
-            self.buttons[y][x].target(True)
+            self._buttons[y][x].target(True)
         for x,y in puzzle.initial().boxes:
-            self.buttons[y][x].content("BOX")
+            self._buttons[y][x].content("BOX")
         try:
             x,y = puzzle.initial().player
-            self.buttons[y][x].content("PLAYER")
+            self._buttons[y][x].content("PLAYER")
         except TypeError:
             pass # No player
 
-    def click(self, tile, content=None, target=None):
+    def _click(self, tile, content=None, target=None):
         """On click callback for clicks on PuzzleTiles."""
 
         if content == None and target == None:
-            mode = self.getmode()
+            mode = self._getmode()
 
             if mode == "EMPTY":
-                self.click(tile, "EMPTY", None)
+                self._click(tile, "EMPTY", None)
             elif mode == "PLAYER":
-                self.click(tile, "PLAYER", None)
+                self._click(tile, "PLAYER", None)
             elif mode == "WALL":
-                self.click(tile, "EMPTY" if tile.content() == "WALL" else "WALL", None)
+                self._click(tile, "EMPTY" if tile.content() == "WALL" else "WALL", None)
             elif mode == "BOX":
-                self.click(tile, "EMPTY" if tile.content() == "BOX" else "BOX", None)
+                self._click(tile, "EMPTY" if tile.content() == "BOX" else "BOX", None)
             elif mode == "TARGET":
-                self.click(tile, None, not tile.target())
+                self._click(tile, None, not tile.target())
         else:
             self._changed = True
             if target != None:
@@ -105,24 +105,24 @@ class CreationArea(ScrollableWindow):
                 if target and tile.content() == "WALL":
                     tile.content("EMPTY")
             if content != None:
-                if self.player == tile.pos and content != "PLAYER":
-                    self.player = None
-                if content == "PLAYER" and self.player != tile.pos:
+                if self._player == tile.pos and content != "PLAYER":
+                    self._player = None
+                if content == "PLAYER" and self._player != tile.pos:
                     try:
-                        x, y = self.player
-                        self.buttons[y][x].content("EMPTY")
+                        x, y = self._player
+                        self._buttons[y][x].content("EMPTY")
                     except TypeError:
                         pass # no previous player
-                    self.player = tile.pos
+                    self._player = tile.pos
 
                 tile.content(content)
 
                 if content == "EMPTY" or content == "WALL":
                     tile.target(False)
 
-    def getPuzzle(self):
+    def get_puzzle(self):
         p = Puzzle(*reversed(self.window.grid_size()))
-        for row in self.buttons:
+        for row in self._buttons:
             for tile in row:
                 if tile.content() == "PLAYER":
                     p.initial().player = tile.pos
@@ -139,30 +139,26 @@ class PuzzleTile(tkinter.Button):
     """Single tile in the puzzle."""
 
     def __init__(self, master, pos, clicked=None):
-        tkinter.Button.__init__(self, master, relief="flat", command=self.click)
+        tkinter.Button.__init__(self, master, relief="flat", command=(lambda: clicked(self)))
         self.pos = pos
-        self.clicked = clicked
         # could raise and propagate valueerror
         self.content("EMPTY", noupdate=True)
         self.target(False, noupdate=True)
-        self.appearance()
+        self._appearance()
 
     def target(self, t = None, noupdate=False):
         if t != None:
             self._target = t
-            noupdate or self.appearance()
+            noupdate or self._appearance()
         return self._target
 
     def content(self, c = None, noupdate=False):
         if c != None:
             self._content = c
-            noupdate or self.appearance()
+            noupdate or self._appearance()
         return self._content
 
-    def appearance(self):
+    def _appearance(self):
         """Set up appearance."""
 
-        self.config(**style.tileStyle(self.content(), self.target()))
-
-    def click(self):
-        self.clicked(self)
+        self.config(**style.tile_style(self.content(), self.target()))

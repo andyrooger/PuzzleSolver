@@ -18,8 +18,8 @@ class UsefulStorage:
     """Saves implementing certain functions in storage classes."""
 
     def record(self, state, parent):
-        self.add_state(state)
-        self.add_parent(state, parent)
+        self._add_state(state)
+        self._add_parent(state, parent)
 
     def record_all(self, states, parent):
         for s in states:
@@ -29,44 +29,44 @@ class LayeredAStarStorage(UsefulStorage):
     """Orders states using various levels of dicts."""
 
     def __init__(self):
-        self.open = {}
-        self.parents = {}
+        self._open = {}
+        self._parents = {}
 
-    def add_parent(self, state, parent):
+    def _add_parent(self, state, parent):
         s, cost, _2 = state
         # only record one parent for each state, can cause recursive lookup if we choose the wrong one, so always choose shortest
         try:
-            if cost >= self.parents[s][1]:
+            if cost >= self._parents[s][1]:
                 return # old value was better
         except KeyError:
             pass # not in yet
-        self.parents[s] = (parent, cost)
+        self._parents[s] = (parent, cost)
 
-    def add_state(self, item):
+    def _add_state(self, item):
         _, cost, expected = item # split parts
 
-        if expected not in self.open: # expected cost level
-            self.open[expected] = {}
-        e_dict = self.open[expected]
+        if expected not in self._open: # expected cost level
+            self._open[expected] = {}
+        e_dict = self._open[expected]
         if cost not in e_dict: # current cost level
             e_dict[cost] = set()
         e_dict[cost].add(item)
 
     def take(self):
-        if not self.open: # no states left
+        if not self._open: # no states left
             raise KeyError
-        min_exp = min(k for k in self.open) # smallest expected
-        e_dict = self.open[min_exp]
-        max_cost = max(k for k in e_dict) # largest current
+        min_exp = min(self._open) # smallest expected
+        e_dict = self._open[min_exp]
+        max_cost = max(e_dict) # largest current
         item = e_dict[max_cost].pop()
         if not e_dict[max_cost]: # remove current level
             del e_dict[max_cost]
         if not e_dict: # remove empty expected level
-            del self.open[min_exp]
+            del self._open[min_exp]
         return item
 
     def parent(self, state):
-        return self.parents[state]
+        return self._parents[state]
 
 class UniqueLayeredAStarStorage(LayeredAStarStorage):
     """Like DictSortedSet using parents as a closed set."""
@@ -74,31 +74,31 @@ class UniqueLayeredAStarStorage(LayeredAStarStorage):
     def __init__(self):
         LayeredAStarStorage.__init__(self)
 
-    def add_state(self, item):
-        if item[0] in self.parents:
+    def _add_state(self, item):
+        if item[0] in self._parents:
             return
-        super().add_state(item)
+        super()._add_state(item)
 
 
 class BasicAStarStorage(UsefulStorage):
     """Uses set for the most basic implementation of our set."""
 
     def __init__(self):
-        self.collection = set()
-        self.parents = {}
+        self._collection = set()
+        self._parents = {}
 
-    def add_parent(self, state, parent):
+    def _add_parent(self, state, parent):
         s, cost, _2 = state
-        self.parents[s] = (parent, cost)
+        self._parents[s] = (parent, cost)
 
-    def add_state(self, item):
-        self.collection.add(item)
+    def _add_state(self, item):
+        self._collection.add(item)
 
     def take(self): # raises key error if none exists
-        return self.collection.pop()
+        return self._collection.pop()
 
     def parent(self, state):
-        return self.parents[state]
+        return self._parents[state]
 
 def StorageManager(Storage):
     """Create a class that spawns a new process to control the class and acts as a proxy anywhere else."""
@@ -107,74 +107,74 @@ def StorageManager(Storage):
         def __init__(self):
             #multiprocessing.current_process.name() # The one to delete with
             # create server process, add and take become clients
-            self.server_pipe, self.client_pipe = multiprocessing.Pipe()
-            self.lock = multiprocessing.Lock() # Every client locks, then send and wait for receive if necessary, then unlock
-            self.storage = None
-            self.manager = multiprocessing.Process(target=self.server)
-            self.manager.start() # Runs independently and closes on finish()
+            self._server_pipe, self._client_pipe = multiprocessing.Pipe()
+            self._lock = multiprocessing.Lock() # Every client locks, then send and wait for receive if necessary, then unlock
+            self._storage = None
+            self._manager = multiprocessing.Process(target=self._server)
+            self._manager.start() # Runs independently and closes on finish()
 
-        def server(self):
+        def _server(self):
             """Serves items back and forth for client."""
 
             storage = Storage()
             while True:
-                msg = self.server_pipe.recv()
+                msg = self._server_pipe.recv()
                 if msg == None:
-                    self.server_pipe.send(storage)
+                    self._server_pipe.send(storage)
                     return
                 elif len(msg) == 2:
                     storage.record_all(msg[0], msg[1])
                 elif len(msg) == 1:
                     p = storage.parent(msg[0])
-                    self.server_pipe.send(p)
+                    self._server_pipe.send(p)
                 else: # len(msg) == 0
                     try:
                         item = storage.take()
                     except KeyError:
                         item = None
-                    self.server_pipe.send(item)
+                    self._server_pipe.send(item)
 
         def finish(self):
             """Tells the manager to stop and make this act as a normal processing set."""
 
-            with self.lock:
-                self.client_pipe.send(None)
-                self.storage = self.client_pipe.recv()
-                self.manager.join()
+            with self._lock:
+                self._client_pipe.send(None)
+                self._storage = self._client_pipe.recv()
+                self._manager.join()
 
         def record(self, state, parent):
-            if self.storage == None:
-                with self.lock:
-                    self.client_pipe.send(([state], parent))
+            if self._storage == None:
+                with self._lock:
+                    self._client_pipe.send(([state], parent))
             else:
-                self.storage.record(state, parent)
+                self._storage.record(state, parent)
 
         def record_all(self, states, parent):
-            if self.storage == None:
-                with self.lock:
-                    self.client_pipe.send((states, parent))
+            if self._storage == None:
+                with self._lock:
+                    self._client_pipe.send((states, parent))
             else:
-                self.storage.record_all(states, parent)
+                self._storage.record_all(states, parent)
 
         def take(self):
-            if self.storage == None:
-                with self.lock:
-                    self.client_pipe.send(())
-                    msg = self.client_pipe.recv()
+            if self._storage == None:
+                with self._lock:
+                    self._client_pipe.send(())
+                    msg = self._client_pipe.recv()
                     if msg == None:
                         raise KeyError
                     else:
                         return msg
             else:
-                return self.storage.take()
+                return self._storage.take()
 
         def parent(self, state):
-            if self.storage == None:
-                with self.lock:
-                    self.client_pipe.send((state,))
-                    return self.client_pipe.recv()
+            if self._storage == None:
+                with self._lock:
+                    self._client_pipe.send((state,))
+                    return self._client_pipe.recv()
             else:
-                return self.storage.parent(state)
+                return self._storage.parent(state)
 
     return StorageManager
 
@@ -184,68 +184,68 @@ def PreparedStorageManager(Storage):
     class PreparedStorageManager(StorageManager(Storage)):
         def __init__(self):
             super().__init__()
-            self.waiting_item = None
+            self._waiting_item = None
 
-        def server(self):
+        def _server(self):
             """Serves items back and forth for client."""
 
             storage = Storage()
             while True:
-                msg = self.server_pipe.recv()
+                msg = self._server_pipe.recv()
                 if msg == None:
-                    self.server_pipe.send(storage)
+                    self._server_pipe.send(storage)
                     return
                 elif len(msg) == 3:
                     storage.record_all(msg[0], msg[1])
                     if msg[2]:
-                        self.send_take(storage)
+                        self._send_take(storage)
                 elif len(msg) == 1:
                     p = storage.parent(msg[0])
-                    self.server_pipe.send(p)
+                    self._server_pipe.send(p)
                 else: # len(msg) == 0
-                    self.send_take(storage)
+                    self._send_take(storage)
 
-        def send_take(self, storage):
+        def _send_take(self, storage):
             try:
                 item = storage.take()
             except KeyError:
                 item = None
-            self.server_pipe.send(item)
+            self._server_pipe.send(item)
 
         def record(self, state, parent):
-            if self.storage == None:
-                with self.lock:
-                    self.client_pipe.send(([state], parent, False))
+            if self._storage == None:
+                with self._lock:
+                    self._client_pipe.send(([state], parent, False))
             else:
-                self.storage.record(state, parent)
+                self._storage.record(state, parent)
 
         def record_all(self, states, parent):
-            if self.storage == None:
-                with self.lock:
-                    self.client_pipe.send((states, parent, True))
-                    new_state = self.client_pipe.recv()
+            if self._storage == None:
+                with self._lock:
+                    self._client_pipe.send((states, parent, True))
+                    new_state = self._client_pipe.recv()
 # Sending back won't work, we shouldn't ever need to though
 #                    if self.waiting_item != None: # if we got one already, send it back
 #                        self.client_pipe.send((new_state], parent))
-                    self.waiting_item = new_state
+                    self._waiting_item = new_state
             else:
-                self.storage.record_all(states, parent)
+                self._storage.record_all(states, parent)
 
         def take(self):
-            if self.storage == None:
-                with self.lock:
-                    if self.waiting_item != None:
-                        item = self.waiting_item
-                        self.waiting_item = None
+            if self._storage == None:
+                with self._lock:
+                    if self._waiting_item != None:
+                        item = self._waiting_item
+                        self._waiting_item = None
                         return item
-                    self.client_pipe.send(())
-                    msg = self.client_pipe.recv()
+                    self._client_pipe.send(())
+                    msg = self._client_pipe.recv()
                     if msg == None:
                         raise KeyError
                     else:
                         return msg
             else:
-                return self.storage.take()
+                return self._storage.take()
 
     return PreparedStorageManager
 
@@ -261,11 +261,11 @@ class AStar:
     """Provides an implementation for the A* algorithm."""
 
     def __init__(self, state, goal, heuristic, expander, Storage=BestStorage):
-        self.goal = goal
-        self.heuristic = heuristic
-        self.expander = expander
-        self.storage = Storage() # Collects and returns full_state
-        self.storage.record((state, 0, self.heuristic(state)), None)
+        self._goal = goal
+        self._heuristic = heuristic
+        self._expander = expander
+        self._storage = Storage() # Collects and returns full_state
+        self._storage.record((state, 0, heuristic(state)), None)
 
     def generate_path(self, state):
         """Generate the states leading to our goal given a minimal state."""
@@ -273,7 +273,7 @@ class AStar:
         states = []
         while state != None:
             states.append(state)
-            state, _ = self.storage.parent(state)
+            state, _ = self._storage.parent(state)
         states.reverse()
         return states
 
@@ -281,21 +281,21 @@ class AStar:
         """Generate the next full states from the current full state."""
 
         (s, cost, _1) = parent
-        if self.goal(s):
+        if self._goal(s):
             return s # Got answer
         else:
-            return [(state, cost+c, cost+c+self.heuristic(state)) for state, c in self.expander(s)]
+            return [(state, cost+c, cost+c+self._heuristic(state)) for state, c in self._expander(s)]
 
     def single_step(self):
         """Take a single state from the set if possible and expand or return the answer."""
 
         try:
-            best_full = self.storage.take()
+            best_full = self._storage.take()
         except KeyError:
             return None # Empty processing set
         states = self.next_states(best_full)
         if isinstance(states, list):
-            self.storage.record_all(states, best_full[0])
+            self._storage.record_all(states, best_full[0])
             return bool(states) # did we add new states
         else:
             return states # goal
@@ -315,9 +315,9 @@ class SymmetricAStar(AStar):
 
     def __init__(self, state, goal, heuristic, expander, groupsize=2, Storage=BestStorage):
         AStar.__init__(self, state, goal, heuristic, expander, Storage)
-        self.groupsize = groupsize
+        self._groupsize = groupsize
 
-    def step_worker(self, pipe, rlock, wlock):
+    def _step_worker(self, pipe, rlock, wlock):
         while True:
             with rlock:
                 msg = pipe.recv()
@@ -327,52 +327,55 @@ class SymmetricAStar(AStar):
             with wlock:
                 pipe.send((next, msg[0])) # return states and minimal parent state
 
-    def distribute_work(self, pipe):
+    def _distribute_work(self, pipe):
         """Distribute as much work as possible and return number distributed."""
 
         distributed = 0
-        for _ in range(self.groupsize):
+        for _ in range(self._groupsize):
             try:
-                state = self.storage.take()
+                state = self._storage.take()
                 pipe.send(state)
                 distributed += 1
             except KeyError:
                 break
         return distributed
 
-    def receive_results(self, pipe, toreceive):
+    def _receive_results(self, pipe, toreceive):
         """Receive all results and return either goal or None"""
 
         goal = None
         for _ in range(toreceive):
             msg, parent = pipe.recv()
             if isinstance(msg, list):
-                self.storage.record_all(msg, parent)
+                self._storage.record_all(msg, parent)
             else:
                 goal = msg
         return goal
 
-    def stop_processes(self, pipe):
+    def _stop_processes(self, pipe):
         """Stop running processes."""
 
-        for _ in range(self.groupsize):
+        for _ in range(self._groupsize):
             pipe.send(None)
 
     def solve(self):
         rlock = multiprocessing.Lock()
         wlock = multiprocessing.Lock()
         server_pipe, worker_pipe = multiprocessing.Pipe()
-        processes = [multiprocessing.Process(target=self.step_worker, args=(worker_pipe, rlock, wlock)) for _ in range(self.groupsize)]
+        processes = [
+            multiprocessing.Process(target=self._step_worker, args=(worker_pipe, rlock, wlock))
+            for _ in range(self._groupsize)
+        ]
         for proc in processes:
             proc.start()
         while True:
-            working = self.distribute_work(server_pipe)
+            working = self._distribute_work(server_pipe)
             if working == 0:
-                self.stop_processes(server_pipe)
+                self._stop_processes(server_pipe)
                 return None
-            goal = self.receive_results(server_pipe, working)
+            goal = self._receive_results(server_pipe, working)
             if goal != None:
-                self.stop_processes(server_pipe)
+                self._stop_processes(server_pipe)
                 return self.generate_path(goal)
 
 
@@ -381,9 +384,9 @@ class ServedAStar(AStar):
 
     def __init__(self, state, goal, heuristic, expander, groupsize=2, Storage=BestStorage):
         AStar.__init__(self, state, goal, heuristic, expander, Storage)
-        self.groupsize = groupsize
+        self._groupsize = groupsize
 
-    def step_worker(self, pipe, rlock, wlock):
+    def _step_worker(self, pipe, rlock, wlock):
         while True:
             with rlock:
                 msg = pipe.recv()
@@ -393,19 +396,19 @@ class ServedAStar(AStar):
             with wlock:
                 pipe.send((next, msg[0])) # return states and minimal parent state
 
-    def distribute_work(self, pipe, available):
+    def _distribute_work(self, pipe, available):
         """Distribute as much work as possible and return number of processes left."""
 
         while available > 0:
             try:
-                state = self.storage.take()
+                state = self._storage.take()
                 pipe.send(state)
                 available -= 1
             except KeyError:
                 break
         return available
 
-    def receive_results(self, pipe, available):
+    def _receive_results(self, pipe, available):
         """Receive all results and return either goal or None"""
 
         goal = None
@@ -413,18 +416,18 @@ class ServedAStar(AStar):
             msg, parent = pipe.recv()
             available += 1
             if isinstance(msg, list):
-                self.storage.record_all(msg, parent)
+                self._storage.record_all(msg, parent)
             else:
                 goal = msg
         return (available, goal)
 
-    def stop_processes(self, pipe, available):
+    def _stop_processes(self, pipe, available):
         """Stop running processes."""
 
-        for _ in range(self.groupsize-available):
+        for _ in range(self._groupsize-available):
             pipe.recv()
 
-        for _ in range(self.groupsize):
+        for _ in range(self._groupsize):
             pipe.send(None)
 
     def solve(self):
@@ -432,18 +435,21 @@ class ServedAStar(AStar):
             rlock = multiprocessing.Lock()
             wlock = multiprocessing.Lock()
             server_pipe, worker_pipe = multiprocessing.Pipe()
-            waiting = self.groupsize
-            processes = [multiprocessing.Process(target=self.step_worker, args=(worker_pipe, rlock, wlock)) for _ in range(self.groupsize)]
+            waiting = self._groupsize
+            processes = [
+                multiprocessing.Process(target=self._step_worker, args=(worker_pipe, rlock, wlock))
+                for _ in range(self._groupsize)
+            ]
             for proc in processes:
                 proc.start()
             while True:
-                waiting = self.distribute_work(server_pipe, waiting)
-                if waiting == self.groupsize:
-                    self.stop_processes(server_pipe, waiting)
+                waiting = self._distribute_work(server_pipe, waiting)
+                if waiting == self._groupsize:
+                    self._stop_processes(server_pipe, waiting)
                     return None
-                waiting, goal = self.receive_results(server_pipe, waiting)
+                waiting, goal = self._receive_results(server_pipe, waiting)
                 if goal != None:
-                    self.stop_processes(server_pipe, waiting)
+                    self._stop_processes(server_pipe, waiting)
                     return self.generate_path(goal)
         finally:
             while any(p.is_alive() for p in processes):
@@ -458,9 +464,9 @@ class PulledAStar(AStar):
 
     def __init__(self, state, goal, heuristic, expander, groupsize=2, Storage=BestStorage):
         AStar.__init__(self, state, goal, heuristic, expander, PreparedStorageManager(Storage))
-        self.groupsize = groupsize
+        self._groupsize = groupsize
 
-    def step_worker(self, q, idle):
+    def _step_worker(self, q, idle):
         """
         Keep performing single step until processing set is empty. Should use our remote manager set.
 
@@ -482,10 +488,13 @@ class PulledAStar(AStar):
                 idle.destroy()
 
     def solve(self):
-        idle = sync.IdleLock(self.groupsize)
+        idle = sync.IdleLock(self._groupsize)
         q = multiprocessing.Queue()
 
-        processes = [multiprocessing.Process(target=self.step_worker, args=(q, idle)) for _ in range(self.groupsize)]
+        processes = [
+            multiprocessing.Process(target=self._step_worker, args=(q, idle))
+            for _ in range(self._groupsize)
+        ]
         for proc in processes:
             proc.start()
 
@@ -498,6 +507,6 @@ class PulledAStar(AStar):
         except queue.Empty:
             pass
 
-        self.storage.finish() # kill manager process
+        self._storage.finish() # kill manager process
 
         return None if answer == None else self.generate_path(answer)
