@@ -3,7 +3,9 @@ Solver for the push puzzle.
 
 """
 
-class PushSolver:
+import solver.plugin
+
+class PushSolver(solver.plugin.Solver):
     """Solver for the PushPuzzle."""
     
     def __init__(self, pause):
