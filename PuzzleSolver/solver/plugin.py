@@ -78,7 +78,7 @@ class Solver(metaclass=abc.ABCMeta):
         """Stop the solver and return success (in stopping)."""
 
 
-def find_plugins(module):
+def _find_plugins(module):
     """Find all plugin names for the given package."""
 
     mod_names = set()
@@ -93,7 +93,7 @@ def find_plugins(module):
 def load_plugins(module):
     """Load all the plugins inside module."""
 
-    plugins = list(find_plugins(module))
+    plugins = list(_find_plugins(module))
     if not plugins:
         return []
     else:
@@ -106,7 +106,7 @@ class DummyView(PuzzleView):
 
     def __init__(self):
         PuzzleView.__init__(self)
-        self.puzzle = None
+        self._puzzle = None
 
     def getFrame(self, master):
         return tkinter.Label(master, text="No puzzle type is currently selected.")
@@ -114,11 +114,11 @@ class DummyView(PuzzleView):
     def canSolve(self): return False
     def getSolver(self): return None
     def getExtension(self): return None
-    def getPuzzle(self): return self.puzzle
+    def getPuzzle(self): return self._puzzle
     def changed(self): return False
     def saved(self): pass
-    def clean(self): self.puzzle = None
+    def clean(self): self._puzzle = None
 
     def load(self, puzzle):
-        self.puzzle = puzzle
+        self._puzzle = puzzle
         return True
