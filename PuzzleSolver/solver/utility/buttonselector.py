@@ -62,7 +62,7 @@ class ButtonSelector(tkinter.Frame):
             btn.grid(row=0, column=dims, sticky="nsew")
         self._buttons.add((btn, item))
 
-    def setEnabled(self, enabled):
+    def set_enabled(self, enabled):
         """Enable or disable the selector."""
         
         state = tkinter.NORMAL if enabled else tkinter.DISABLED
