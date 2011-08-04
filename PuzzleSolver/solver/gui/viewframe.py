@@ -17,13 +17,13 @@ class ViewFrame(SimpleFrame):
         SimpleFrame.__init__(self, master)
 
         # Should always happen first so vito is a hack
-        solver.state.view.vitoChange(self._onViewChange)
+        solver.state.view.vito_change(self._onViewChange)
         solver.state.puzzle.change(None)
 
-        solver.state.mode.vitoChange(self._vitoPuzzleOrModeChange)
-        solver.state.puzzle.vitoChange(self._vitoPuzzleOrModeChange)
-        solver.state.quitting.vitoChange(self._vitoQuitting)
-        solver.state.wiping.vitoChange(self._vitoWiping)
+        solver.state.mode.vito_change(self._vitoPuzzleOrModeChange)
+        solver.state.puzzle.vito_change(self._vitoPuzzleOrModeChange)
+        solver.state.quitting.vito_change(self._vitoQuitting)
+        solver.state.wiping.vito_change(self._vitoWiping)
 
     def _vitoPuzzleOrModeChange(self, _):
         return not solver.state.wiping.attempt()

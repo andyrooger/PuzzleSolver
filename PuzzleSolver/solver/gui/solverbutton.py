@@ -22,10 +22,10 @@ class SolverButton(tkinter.Frame):
 
         self._pressed(solver.state.solving.value() != None)
 
-        solver.state.view.onChange(self._viewChanged)
-        solver.state.solving.onChange(self._solvingChanged)
-        solver.state.solving.vitoChange(self._vitoSolving)
-        solver.state.wiping.vitoChange(self._vitoWipe)
+        solver.state.view.on_change(self._viewChanged)
+        solver.state.solving.on_change(self._solvingChanged)
+        solver.state.solving.vito_change(self._vitoSolving)
+        solver.state.wiping.vito_change(self._vitoWipe)
 
     def toggle(self):
         """Press or unpress the button."""

@@ -44,14 +44,14 @@ def start_gui():
     root = tkinter.tix.Tk()
     root.title(APP_TITLE)
 
-    solver.state.quitting.onChange(lambda _: root.destroy())
+    solver.state.quitting.on_change(lambda _: root.destroy())
 
     def puzzle_change(n_puz):
         if n_puz == None:
             root.title(APP_TITLE)
         else:
             root.title(APP_TITLE + " - " + n_puz.name().title())
-    solver.state.puzzle.onChange(puzzle_change)
+    solver.state.puzzle.on_change(puzzle_change)
 
     root.protocol("WM_DELETE_WINDOW", solver.state.quitting.attempt)
     appwin = SolverGUI(root)

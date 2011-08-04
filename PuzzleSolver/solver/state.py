@@ -17,12 +17,12 @@ class WatchedValue:
         self.allowable = allowable if allowable else None
         self.default = default
 
-    def onChange(self, callback):
+    def on_change(self, callback):
         """Add a callback to be called with new value on change."""
 
         self._callbacks.add(callback)
 
-    def vitoChange(self, callback):
+    def vito_change(self, callback):
         """Add a callback that can vito a change."""
 
         self._vitos.add(callback)
@@ -73,5 +73,5 @@ def _update_mode(m):
 def _update_view(p, m):
     view.change(plugin.DummyView() if p == None or m == None else p.get(m))
 
-puzzle.onChange(_update_puzzle)
-mode.onChange(_update_mode)
+puzzle.on_change(_update_puzzle)
+mode.on_change(_update_mode)

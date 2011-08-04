@@ -24,8 +24,8 @@ class ControlPanel(tkinter.Frame):
         self._loadBtn = tkinter.Button(self, text="Load", command=self.load)
         self._loadBtn.grid(column=2, row=0, sticky="nsew")
 
-        solver.state.puzzle.onChange(self._puzzle_chosen)
-        solver.state.view.onChange(self._view_changed)
+        solver.state.puzzle.on_change(self._puzzle_chosen)
+        solver.state.view.on_change(self._view_changed)
 
     def clean(self):
         if solver.state.wiping.attempt():
