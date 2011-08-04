@@ -41,7 +41,7 @@ class ModeChoice(tkinter.Frame):
         self._selector.grid(sticky="nsew")
 
         solver.state.puzzle.on_change(self._puzzle_chosen)
-        solver.state.mode.on_change(self._mode_chosen)
+        solver.state.mode.during_change(self._mode_chosen)
 
     def _puzzle_chosen(self, puzzle):
         self._selector.set_enabled(puzzle != None)

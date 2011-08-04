@@ -42,7 +42,7 @@ class PuzzleChoice(tkinter.Frame):
                 self._selector.add(plugin.name(), plugin)
         self._selector.grid(row=1, sticky="nsew")
 
-        solver.state.puzzle.on_change(self._selector.selection)
+        solver.state.puzzle.during_change(self._selector.selection)
 
     def _change_puzzle(self, puzzle):
         if solver.state.puzzle.change(None):

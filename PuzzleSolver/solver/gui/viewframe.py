@@ -34,8 +34,7 @@ class ViewFrame(SimpleFrame):
     def __init__(self, master):
         SimpleFrame.__init__(self, master)
 
-        # Should always happen first so vito is a hack
-        solver.state.view.vito_change(self._on_view_change)
+        solver.state.view.during_change(self._on_view_change)
         solver.state.puzzle.change(None)
 
         solver.state.mode.vito_change(self._vito_puzzle_or_mode_change)
@@ -57,4 +56,3 @@ class ViewFrame(SimpleFrame):
             tkinter.Label(self, text="No puzzle type is currently selected.")
             if view == None else view.get_frame(self))
         self.set_content(frame)
-        return False # do not vito, EVER!

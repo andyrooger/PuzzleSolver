@@ -30,10 +30,16 @@ class WatchedValue:
 
     def __init__(self, default, *allowable):
         self._value = default
+        self._during = set()
         self._callbacks = set()
         self._vitos = set()
         self.allowable = allowable if allowable else None
         self.default = default
+
+    def during_change(self, callback):
+        """Add a callback that is called as part of the changing process."""
+        
+        self._during.add(callback)
 
     def on_change(self, callback):
         """Add a callback to be called with new value on change."""
@@ -58,9 +64,13 @@ class WatchedValue:
         if any(vito(to) for vito in self._vitos):
             return False
 
+        for cb in self._during:
+            cb(to)
+
         for cb in self._callbacks:
             cb(to)
-        self._value = to
+            
+        self._value = to # after, so callbacks can still see the old value as well as the new
         return True
 
     def attempt(self):
