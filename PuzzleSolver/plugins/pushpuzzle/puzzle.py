@@ -105,10 +105,12 @@ class PuzzleState:
         else:
             raise ValueError("Cannot edit a finalised puzzle state.")
 
-    def finalise(self):
+    def finalise(self, freeze=True):
         if self.finalised:
             return
         self._record_accessibility()
+        if freeze:
+            self.boxes = frozenset(self.boxes)
         self.finalised = True
 
     def valid(self):
@@ -133,7 +135,7 @@ class PuzzleState:
         """Create and record a set describing accessible coordinates from this state."""
         
         if self.player == None:
-            self.accessible = set()
+            self.accessible = frozenset()
             return
 
         accessible = set()
@@ -152,7 +154,7 @@ class PuzzleState:
             accessible.add(pos)
             x, y = pos
             tocheck += [(x-1,y), (x+1,y), (x,y-1), (x,y+1)]
-        self.accessible = accessible
+        self.accessible = frozenset(accessible)
 
     def goal(self):
         """Have we achieved our goal?"""
@@ -179,16 +181,16 @@ class PuzzleState:
         p = PuzzleState(self.parent)
         if not self.finalised:
             p.player = player or self.player
-            p.boxes = self.boxes.copy()
+            p.boxes = set(self.boxes)
         elif player == None: # Don't finalise
             p.player = self.player
-            p.boxes = self.boxes.copy()
+            p.boxes = set(self.boxes)
         else: # finalise
             p.player = player
-            p.boxes = self.boxes
+            p.boxes = self.boxes # still frozen
             if player in self.accessible:
                 p.accessible = self.accessible
                 p.finalised = True
             else:
-                p.finalise()
+                p.finalise(freeze=False) # Don't need to freeze boxes
         return p
