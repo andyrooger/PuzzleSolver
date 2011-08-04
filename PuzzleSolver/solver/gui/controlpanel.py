@@ -17,15 +17,15 @@ class ControlPanel(tkinter.Frame):
         self.grid_columnconfigure(1, weight=1)
         self.grid_columnconfigure(2, weight=1)
         self.grid_rowconfigure(1, weight=1)
-        self.cleanBtn = tkinter.Button(self, text="Clean", command=self.clean)
-        self.cleanBtn.grid(column=0, row=0, sticky="nsew")
-        self.saveBtn = tkinter.Button(self, text="Save", command=self.save)
-        self.saveBtn.grid(column=1, row=0, sticky="nsew")
-        self.loadBtn = tkinter.Button(self, text="Load", command=self.load)
-        self.loadBtn.grid(column=2, row=0, sticky="nsew")
+        self._cleanBtn = tkinter.Button(self, text="Clean", command=self.clean)
+        self._cleanBtn.grid(column=0, row=0, sticky="nsew")
+        self._saveBtn = tkinter.Button(self, text="Save", command=self.save)
+        self._saveBtn.grid(column=1, row=0, sticky="nsew")
+        self._loadBtn = tkinter.Button(self, text="Load", command=self.load)
+        self._loadBtn.grid(column=2, row=0, sticky="nsew")
 
-        solver.state.puzzle.onChange(self.puzzleChosen)
-        solver.state.view.onChange(self.viewChanged)
+        solver.state.puzzle.onChange(self._puzzle_chosen)
+        solver.state.view.onChange(self._view_changed)
 
     def clean(self):
         if solver.state.wiping.attempt():
@@ -38,13 +38,13 @@ class ControlPanel(tkinter.Frame):
         if solver.state.wiping.attempt():
             PuzzleSaver().load(self)
 
-    def puzzleChosen(self, puzzle):
+    def _puzzle_chosen(self, puzzle):
         state = tkinter.NORMAL if puzzle != None else tkinter.DISABLED
-        self.cleanBtn.configure(state=state)
-        self.saveBtn.configure(state=state)
-        self.loadBtn.configure(state=state)
+        self._cleanBtn.configure(state=state)
+        self._saveBtn.configure(state=state)
+        self._loadBtn.configure(state=state)
 
-    def viewChanged(self, view):
+    def _view_changed(self, view):
         puzzle = solver.state.view.value().getPuzzle()
         if puzzle != None:
             view.load(puzzle)
