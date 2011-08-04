@@ -17,15 +17,15 @@ class SolverButton(tkinter.Frame):
         self.grid_rowconfigure(0, weight=1)
 
         self._selected = False
-        self.btn = tkinter.Button(self, text="Solve", command=self.toggle)
-        self.btn.grid(sticky="nsew")
+        self._btn = tkinter.Button(self, text="Solve", command=self.toggle)
+        self._btn.grid(sticky="nsew")
 
         self._pressed(solver.state.solving.value() != None)
 
-        solver.state.view.on_change(self._viewChanged)
-        solver.state.solving.on_change(self._solvingChanged)
-        solver.state.solving.vito_change(self._vitoSolving)
-        solver.state.wiping.vito_change(self._vitoWipe)
+        solver.state.view.on_change(self._view_changed)
+        solver.state.solving.on_change(self._solving_changed)
+        solver.state.solving.vito_change(self._vito_solving)
+        solver.state.wiping.vito_change(self._vito_wipe)
 
     def toggle(self):
         """Press or unpress the button."""
@@ -40,20 +40,20 @@ class SolverButton(tkinter.Frame):
             return
         self._selected = selected
         if selected:
-            self.btn.config(relief=tkinter.SUNKEN)
+            self._btn.config(relief=tkinter.SUNKEN)
         else:
-            self.btn.config(relief=tkinter.RAISED)
+            self._btn.config(relief=tkinter.RAISED)
 
-    def _viewChanged(self, view):
+    def _view_changed(self, view):
         state = tkinter.NORMAL if view != None and view.can_solve() else tkinter.DISABLED
-        self.btn.config(state=state)
+        self._btn.config(state=state)
 
-    def _solvingChanged(self, solving):
+    def _solving_changed(self, solving):
         self._pressed(solving != None)
         if solving != None:
             solving.start()
 
-    def _vitoSolving(self, solving):
+    def _vito_solving(self, solving):
         old = solver.state.solving.value()
         if solving == old:
             return False
@@ -66,5 +66,5 @@ class SolverButton(tkinter.Frame):
         else:
             return False
 
-    def _vitoWipe(self, _):
+    def _vito_wipe(self, _):
         return not solver.state.solving.change(None)

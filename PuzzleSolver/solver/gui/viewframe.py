@@ -17,24 +17,24 @@ class ViewFrame(SimpleFrame):
         SimpleFrame.__init__(self, master)
 
         # Should always happen first so vito is a hack
-        solver.state.view.vito_change(self._onViewChange)
+        solver.state.view.vito_change(self._on_view_change)
         solver.state.puzzle.change(None)
 
-        solver.state.mode.vito_change(self._vitoPuzzleOrModeChange)
-        solver.state.puzzle.vito_change(self._vitoPuzzleOrModeChange)
-        solver.state.quitting.vito_change(self._vitoQuitting)
-        solver.state.wiping.vito_change(self._vitoWiping)
+        solver.state.mode.vito_change(self._vito_puzzle_or_mode_change)
+        solver.state.puzzle.vito_change(self._vito_puzzle_or_mode_change)
+        solver.state.quitting.vito_change(self._vito_quitting)
+        solver.state.wiping.vito_change(self._vito_wiping)
 
-    def _vitoPuzzleOrModeChange(self, _):
+    def _vito_puzzle_or_mode_change(self, _):
         return not solver.state.wiping.attempt()
 
-    def _vitoQuitting(self, _):
+    def _vito_quitting(self, _):
         return not solver.state.wiping.attempt()
 
-    def _vitoWiping(self, _):
+    def _vito_wiping(self, _):
         return not PuzzleSaver().check(self)
 
-    def _onViewChange(self, view):
+    def _on_view_change(self, view):
         frame = (
             tkinter.Label(self, text="No puzzle type is currently selected.")
             if view == None else view.get_frame(self))
