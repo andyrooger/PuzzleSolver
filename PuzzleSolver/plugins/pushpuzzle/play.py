@@ -59,7 +59,7 @@ class PlaceholderPlayFrame(SimpleFrame):
         return isinstance(self.content, PlayFrame)
 
     def can_solve(self):
-        return self._puzzle_loaded()
+        return True
 
     def get_solver(self):
         if self._puzzle_loaded():
