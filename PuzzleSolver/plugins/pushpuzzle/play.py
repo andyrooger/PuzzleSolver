@@ -109,9 +109,9 @@ class PlayFrame(tkinter.Frame):
         def next():
             self._playarea.next()
             self._control_state()
-        self._prevarrow = tkinter.Button(self, image=style.loadIcon("larrow"), command=prev)
+        self._prevarrow = tkinter.Button(self, image=style.load_icon("larrow"), command=prev)
         self._prevarrow.grid(sticky="nsew", row=0, column=0)
-        self._nextarrow = tkinter.Button(self, image=style.loadIcon("rarrow"), command=next)
+        self._nextarrow = tkinter.Button(self, image=style.load_icon("rarrow"), command=next)
         self._nextarrow.grid(sticky="nsew", row=0, column=1)
 
         self._status = tkinter.Label(self, text="")

@@ -50,7 +50,7 @@ class PlayArea(ScrollableWindow):
         if pos in self.puzzle.state().boxes:
             content = "BOX"
         target = (pos in self.puzzle.targets)
-        tile.config(**style.tileStyle(content, target, separated=False))
+        tile.config(**style.tile_style(content, target, separated=False))
 
     def createView(self):
         """Create the main part of the GUI."""

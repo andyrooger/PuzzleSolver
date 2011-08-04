@@ -6,22 +6,22 @@ Helps with a consistent style and avoids loading images more than once.
 import tkinter
 import os.path
 
-icons = {}
+_icons = {}
 
-def loadIcon(name):
+def load_icon(name):
     """Load and record all available icons."""
 
-    global icons
+    global _icons
 
-    if name in icons:
-        return icons[name]
+    if name in _icons:
+        return _icons[name]
 
     file = os.path.dirname(__file__)
     file = os.path.join(file, "resources", "images", name.lower() + ".gif")
-    icons[name] = tkinter.PhotoImage(file=file)
-    return icons[name]
+    _icons[name] = tkinter.PhotoImage(file=file)
+    return _icons[name]
 
-def tileStyle(content=None, target=None, separated=True):
+def tile_style(content=None, target=None, separated=True):
     """Get the style for a certain tile."""
 
     conf = {"highlightthickness": 3}
@@ -29,9 +29,9 @@ def tileStyle(content=None, target=None, separated=True):
     if content != None:
         conf["bg"] = "blue" if content == "WALL" else "white"
         conf["activebackground"] = "darkblue" if content == "WALL" else "gray"
-        conf["image"] = (loadIcon(content)
+        conf["image"] = (load_icon(content)
                          if content in ["PLAYER", "BOX"]
-                         else loadIcon("BLANK"))
+                         else load_icon("BLANK"))
     if target != None:
         if separated:
             conf["highlightbackground"] = "red" if target else "lightgray"

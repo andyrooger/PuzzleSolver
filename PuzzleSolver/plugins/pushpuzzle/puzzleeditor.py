@@ -20,7 +20,7 @@ class PuzzleEditor(tkinter.Frame):
 
         self.modeselect = ButtonSelector(self)
         for mode in EDIT_MODES:
-            self.modeselect.add("Edit " + mode.title(), mode, style.loadIcon(mode))
+            self.modeselect.add("Edit " + mode.title(), mode, style.load_icon(mode))
         self.modeselect.grid(sticky="nsew", row=1, column=0)
 
         self.creation = CreationArea(self, puzzle, getmode=self.modeselect.selection)
@@ -162,7 +162,7 @@ class PuzzleTile(tkinter.Button):
     def appearance(self):
         """Set up appearance."""
 
-        self.config(**style.tileStyle(self.content(), self.target()))
+        self.config(**style.tile_style(self.content(), self.target()))
 
     def click(self):
         self.clicked(self)
