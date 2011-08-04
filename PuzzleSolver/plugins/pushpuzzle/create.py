@@ -19,15 +19,15 @@ class CreateView(solver.plugin.PuzzleView):
         solver.plugin.PuzzleView.__init__(self)
         self.frame = None
 
-    def getFrame(self, master):
+    def get_frame(self, master):
         self.frame = CreateFrame(master)
         return self.frame
 
-    def canSolve(self): return False
-    def getSolver(self): return None
-    def getExtension(self): return ".spp"
+    def can_solve(self): return False
+    def get_solver(self): return None
+    def get_extension(self): return ".spp"
 
-    def getPuzzle(self): return self.frame.getPuzzle()
+    def get_puzzle(self): return self.frame.get_puzzle()
     def changed(self): return self.frame.changed()
     def saved(self): return self.frame.saved()
     def clean(self): return self.frame.clean()
@@ -59,9 +59,9 @@ class CreateFrame(SimpleFrame):
             self.setContent(puz)
             return True
 
-    def getPuzzle(self):
+    def get_puzzle(self):
         if self.showingEditor():
-            return self.content.getPuzzle()
+            return self.content.get_puzzle()
         else:
             return None
 

@@ -45,6 +45,6 @@ class ControlPanel(tkinter.Frame):
         self._loadBtn.configure(state=state)
 
     def _view_changed(self, view):
-        puzzle = solver.state.view.value().getPuzzle()
+        puzzle = solver.state.view.value().get_puzzle()
         if puzzle != None:
             view.load(puzzle)

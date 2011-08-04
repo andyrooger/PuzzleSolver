@@ -31,8 +31,8 @@ class PuzzleSaver:
             return (choice == False) # If cancelled then will be None
 
     def save(self, master):
-        ext = self._view.getExtension()
-        puzzle = self._view.getPuzzle()
+        ext = self._view.get_extension()
+        puzzle = self._view.get_puzzle()
         if puzzle == None:
             messagebox.showinfo("Whoops", "Sorry, this puzzle is not saveable.")
             return False
@@ -59,7 +59,7 @@ class PuzzleSaver:
         return True
 
     def load(self, master):
-        ext = self._view.getExtension()
+        ext = self._view.get_extension()
         if ext == None:
             messagebox.showinfo("Whoops", "Sorry, this puzzle type is not loadable.")
             return False

@@ -26,8 +26,8 @@ class PuzzleEditor(tkinter.Frame):
         self.creation = CreationArea(self, puzzle, getmode=self.modeselect.selection)
         self.creation.grid(sticky="nsew", row=0, column=0)
 
-    def getPuzzle(self):
-        return self.creation.getPuzzle()
+    def get_puzzle(self):
+        return self.creation.get_puzzle()
 
     def saved(self):
         self.creation.saved()
@@ -120,7 +120,7 @@ class CreationArea(ScrollableWindow):
                 if content == "EMPTY" or content == "WALL":
                     tile.target(False)
 
-    def getPuzzle(self):
+    def get_puzzle(self):
         p = Puzzle(*reversed(self.window.grid_size()))
         for row in self.buttons:
             for tile in row:

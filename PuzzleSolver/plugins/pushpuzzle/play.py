@@ -19,21 +19,21 @@ class PlayView(solver.plugin.PuzzleView):
         solver.plugin.PuzzleView.__init__(self)
         self.frame = None
 
-    def getFrame(self, master):
+    def get_frame(self, master):
         self.frame = PlaceholderPlayFrame(master)
         return self.frame
 
-    def canSolve(self):
-        return self.frame.canSolve()
+    def can_solve(self):
+        return self.frame.can_solve()
     
-    def getSolver(self):
-        return self.frame.getSolver()
+    def get_solver(self):
+        return self.frame.get_solver()
 
-    def getExtension(self):
+    def get_extension(self):
         return ".spp"
 
-    def getPuzzle(self):
-        return self.frame.getPuzzle()
+    def get_puzzle(self):
+        return self.frame.get_puzzle()
 
     def changed(self):
         return self.frame.changed()
@@ -58,12 +58,12 @@ class PlaceholderPlayFrame(SimpleFrame):
     def puzzleLoaded(self):
         return isinstance(self.content, PlayFrame)
 
-    def canSolve(self):
+    def can_solve(self):
         return self.puzzleLoaded()
 
-    def getSolver(self):
+    def get_solver(self):
         if self.puzzleLoaded():
-            return self.content.getSolver()
+            return self.content.get_solver()
         else:
             return None
 
@@ -74,8 +74,8 @@ class PlaceholderPlayFrame(SimpleFrame):
         if self.puzzleLoaded():
             self.content.saved()
 
-    def getPuzzle(self):
-        return self.content.getPuzzle() if self.puzzleLoaded() else None
+    def get_puzzle(self):
+        return self.content.get_puzzle() if self.puzzleLoaded() else None
 
     def clean(self):
         if self.puzzleLoaded():
@@ -132,7 +132,7 @@ class PlayFrame(tkinter.Frame):
         info = self.playarea.metrics()
         self.status["text"] = "Targets: %(filled)s/%(targets)s  -  Moves: %(move)s/%(total)s" % info
 
-    def getSolver(self):
+    def get_solver(self):
         return PushSolver(self.freeze)
 
     def changed(self):
@@ -141,7 +141,7 @@ class PlayFrame(tkinter.Frame):
     def saved(self):
         self._changed = False
 
-    def getPuzzle(self):
+    def get_puzzle(self):
         return None # TODO - maybe
 
     def clean(self):

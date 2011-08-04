@@ -31,7 +31,7 @@ class SolverButton(tkinter.Frame):
         """Press or unpress the button."""
         
         cur = solver.state.solving.value()
-        solver.state.solving.change(solver.state.view.value().getSolver() if cur == None else None)
+        solver.state.solving.change(solver.state.view.value().get_solver() if cur == None else None)
 
     def _pressed(self, selected):
         """Update the pressed status and look of the button."""
@@ -45,7 +45,7 @@ class SolverButton(tkinter.Frame):
             self.btn.config(relief=tkinter.RAISED)
 
     def _viewChanged(self, view):
-        state = tkinter.NORMAL if view != None and view.canSolve() else tkinter.DISABLED
+        state = tkinter.NORMAL if view != None and view.can_solve() else tkinter.DISABLED
         self.btn.config(state=state)
 
     def _solvingChanged(self, solving):

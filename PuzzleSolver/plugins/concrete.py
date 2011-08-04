@@ -45,7 +45,7 @@ class ConcreteView(solver.plugin.PuzzleView):
         if not needssaving:
             self.oldval = text
 
-    def getFrame(self, master):
+    def get_frame(self, master):
         """Get the GUI frame."""
         fr = tkinter.Frame(master)
         fr.grid_rowconfigure(0, weight=1)
@@ -56,19 +56,19 @@ class ConcreteView(solver.plugin.PuzzleView):
         self.status.grid(row=0, column=1, rowspan=2, sticky="nse")
         return fr
 
-    def canSolve(self):
+    def can_solve(self):
         """Can we solve puzzles in this view."""
         return self.i > 4 and self.mode == "PLAY"
 
-    def getSolver(self):
+    def get_solver(self):
         """Get the solver for this view if one exists."""
-        return ConcreteSolver(self.data, self.status) if self.canSolve() else None
+        return ConcreteSolver(self.data, self.status) if self.can_solve() else None
 
-    def getExtension(self):
+    def get_extension(self):
         """Get either the file extension used to save the puzzles below, or None."""
         return ".con"
 
-    def getPuzzle(self):
+    def get_puzzle(self):
         """Get either the puzzle object if it can be saved, or None."""
         return self.data.get()
 

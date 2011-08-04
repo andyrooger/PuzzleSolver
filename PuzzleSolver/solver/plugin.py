@@ -28,23 +28,23 @@ class PuzzleView(metaclass=abc.ABCMeta):
         """Here to avoid complaints in subclasses."""
 
     @abc.abstractmethod
-    def getFrame(self, master):
+    def get_frame(self, master):
         """Get the GUI frame."""
 
     @abc.abstractmethod
-    def canSolve(self):
+    def can_solve(self):
         """Can we solve puzzles in this view."""
 
     @abc.abstractmethod
-    def getSolver(self):
+    def get_solver(self):
         """Get the solver for this view if one exists."""
 
     @abc.abstractmethod
-    def getExtension(self):
+    def get_extension(self):
         """Get either the file extension used to save the puzzles below, or None"""
 
     @abc.abstractmethod
-    def getPuzzle(self):
+    def get_puzzle(self):
         """Get either the puzzle object if it can be saved, or None."""
 
     @abc.abstractmethod
@@ -108,13 +108,13 @@ class DummyView(PuzzleView):
         PuzzleView.__init__(self)
         self._puzzle = None
 
-    def getFrame(self, master):
+    def get_frame(self, master):
         return tkinter.Label(master, text="No puzzle type is currently selected.")
 
-    def canSolve(self): return False
-    def getSolver(self): return None
-    def getExtension(self): return None
-    def getPuzzle(self): return self._puzzle
+    def can_solve(self): return False
+    def get_solver(self): return None
+    def get_extension(self): return None
+    def get_puzzle(self): return self._puzzle
     def changed(self): return False
     def saved(self): pass
     def clean(self): self._puzzle = None

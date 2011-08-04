@@ -14,14 +14,14 @@ class UnknownView(solver.plugin.PuzzleView):
         solver.plugin.PuzzleView.__init__(self)
         self.mode = mode
 
-    def getFrame(self, master):
+    def get_frame(self, master):
         txt = "Sorry, this mode is not supported: " + self.mode
         return tkinter.Label(master, text=txt)
 
-    def canSolve(self): return False
-    def getSolver(self): return None
-    def getExtension(self): return None
-    def getPuzzle(self): return None
+    def can_solve(self): return False
+    def get_solver(self): return None
+    def get_extension(self): return None
+    def get_puzzle(self): return None
     def changed(self): return False
     def saved(self): pass
     def clean(self): pass
