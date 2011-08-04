@@ -84,25 +84,25 @@ class PlayArea(ScrollableWindow):
         if self._frozen:
             return
 
-        self._automove([])
+        self.automove([])
 
         player = self._puzzle.state().player
         dist = abs(pos[0] - player[0]) + abs(pos[1] - player[1])
         if dist == 1: # adjacent
             if pos[0] < player[0]:
-                self._automove(["LEFT"])
+                self.automove(["LEFT"])
             elif pos[0] > player[0]:
-                self._automove(["RIGHT"])
+                self.automove(["RIGHT"])
             elif pos[1] < player[1]:
-                self._automove(["UP"])
+                self.automove(["UP"])
             elif pos[1] > player[1]:
-                self._automove(["DOWN"])
+                self.automove(["DOWN"])
             return
 
         # Try long path find, will be None if not accessible
         # Don't worry about blocking, should be fast and we don't want the user to interact in between
         path = pathfinder.find_path(self._puzzle.state(), pos)
-        self._automove(path or [])
+        self.automove(path or [])
 
     def _keypress(self, evt):
         """A key has been pressed."""
@@ -111,9 +111,9 @@ class PlayArea(ScrollableWindow):
             return
 
         if evt.keycode in _KEYCODES:
-            self._automove([_KEYCODES[evt.keycode]])
+            self.automove([_KEYCODES[evt.keycode]])
 
-    def _automove(self, directions):
+    def automove(self, directions):
         """Keep calling move at regular intervals until the list is completed."""
         
         if self._automover_cb != None:
@@ -174,20 +174,20 @@ class PlayArea(ScrollableWindow):
         return True
 
     def freeze(self, frozen):
-        self._automove([])
+        self.automove([])
         self._frozen = frozen
 
     def rewind(self):
         """Go to the beginning of the play area."""
 
-        self._automove([])
+        self.automove([])
         self._puzzle.cursor(0)
         self._update_view()
 
     def next(self):
         """Go to the next state. Return whether successful."""
         
-        self._automove([])
+        self.automove([])
         try:
             self._puzzle.cursor(self._puzzle.cursor()+1)
             self._update_view()
@@ -203,7 +203,7 @@ class PlayArea(ScrollableWindow):
     def prev(self):
         """Go to previous state. Returns whether successful."""
 
-        self._automove([])
+        self.automove([])
         try:
             self._puzzle.cursor(self._puzzle.cursor()-1)
             self._update_view()
@@ -215,6 +215,9 @@ class PlayArea(ScrollableWindow):
         """Do we have a previous state?"""
 
         return self._puzzle.cursor() > 0
+
+    def get_puzzle(self):
+        return self._puzzle
 
     def metrics(self):
         """Return useful info about the puzzle state."""

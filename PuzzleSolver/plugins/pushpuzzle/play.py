@@ -24,7 +24,7 @@ class PlayView(solver.plugin.PuzzleView):
         return self._frame
 
     def can_solve(self):
-        return self._frame.can_solve()
+        return True
     
     def get_solver(self):
         return self._frame.get_solver()
@@ -57,9 +57,6 @@ class PlaceholderPlayFrame(SimpleFrame):
 
     def _puzzle_loaded(self):
         return isinstance(self.content, PlayFrame)
-
-    def can_solve(self):
-        return True
 
     def get_solver(self):
         if self._puzzle_loaded():
@@ -133,7 +130,7 @@ class PlayFrame(tkinter.Frame):
         self._status["text"] = "Targets: %(filled)s/%(targets)s  -  Moves: %(move)s/%(total)s" % info
 
     def get_solver(self):
-        return PushSolver(self.freeze)
+        return PushSolver(self.freeze, self.get_puzzle, self._playarea.automove)
 
     def changed(self):
         return self._changed
