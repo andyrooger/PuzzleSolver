@@ -174,6 +174,7 @@ class PlayArea(ScrollableWindow):
         return True
 
     def freeze(self, frozen):
+        self._automove([])
         self._frozen = frozen
 
     def rewind(self):

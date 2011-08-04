@@ -83,7 +83,7 @@ class Puzzle:
 
         self.state().finalise()
 
-        self._states[self.curstate+1:] = [self.state().copy(player)]
+        self._states[self._curstate+1:] = [self.state().copy(player)]
         self._curstate = len(self)-1
 
     def __len__(self):
