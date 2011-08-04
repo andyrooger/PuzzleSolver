@@ -32,10 +32,10 @@ class PuzzleSaver:
     """Allows saving/loading and querying of puzzles."""
 
     def __init__(self):
-        self.view = solver.state.view.value()
+        self._view = solver.state.view.value()
 
     def check(self, master):
-        if not self.view.changed():
+        if not self._view.changed():
             return True
         choice = messagebox.askyesnocancel(
             "I'm helping you",
@@ -49,8 +49,8 @@ class PuzzleSaver:
             return (choice == False) # If cancelled then will be None
 
     def save(self, master):
-        ext = self.view.getExtension()
-        puzzle = self.view.getPuzzle()
+        ext = self._view.get_extension()
+        puzzle = self._view.get_puzzle()
         if puzzle == None:
             messagebox.showinfo("Whoops", "Sorry, this puzzle is not saveable.")
             return False
@@ -72,12 +72,12 @@ class PuzzleSaver:
         except IOError:
             messagebox.showwarning("Whoops", "Could not write this puzzle to file.")
             return False
-        self.view.saved()
+        self._view.saved()
         messagebox.showinfo("Finished", "Puzzle written successfully.")
         return True
 
     def load(self, master):
-        ext = self.view.getExtension()
+        ext = self._view.get_extension()
         if ext == None:
             messagebox.showinfo("Whoops", "Sorry, this puzzle type is not loadable.")
             return False
@@ -100,4 +100,4 @@ class PuzzleSaver:
             messagebox.showwarning("Whoops", "The file could not be read.")
             return False
             
-        return self.view.load(puzzle)
+        return self._view.load(puzzle)

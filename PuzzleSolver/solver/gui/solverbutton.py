@@ -34,40 +34,44 @@ class SolverButton(tkinter.Frame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self.selected = False
-        self.btn = tkinter.Button(self, text="Solve", command=self.toggle)
-        self.btn.grid(sticky="nsew")
+        self._selected = False
+        self._btn = tkinter.Button(self, text="Solve", command=self.toggle)
+        self._btn.grid(sticky="nsew")
 
-        self.pressed(solver.state.solving.value() != None)
+        self._pressed(solver.state.solving.value() != None)
 
-        solver.state.view.onChange(self.viewChanged)
-        solver.state.solving.onChange(self.solvingChanged)
-        solver.state.solving.vitoChange(self.vitoSolving)
-        solver.state.wiping.vitoChange(self.vitoWipe)
+        solver.state.view.on_change(self._view_changed)
+        solver.state.solving.on_change(self._solving_changed)
+        solver.state.solving.vito_change(self._vito_solving)
+        solver.state.wiping.vito_change(self._vito_wipe)
 
     def toggle(self):
+        """Press or unpress the button."""
+        
         cur = solver.state.solving.value()
-        solver.state.solving.change(solver.state.view.value().getSolver() if cur == None else None)
+        solver.state.solving.change(solver.state.view.value().get_solver() if cur == None else None)
 
-    def pressed(self, selected):
-        if selected == self.selected:
+    def _pressed(self, selected):
+        """Update the pressed status and look of the button."""
+        
+        if selected == self._selected:
             return
-        self.selected = selected
+        self._selected = selected
         if selected:
-            self.btn.config(relief=tkinter.SUNKEN)
+            self._btn.config(relief=tkinter.SUNKEN)
         else:
-            self.btn.config(relief=tkinter.RAISED)
+            self._btn.config(relief=tkinter.RAISED)
 
-    def viewChanged(self, view):
-        state = tkinter.NORMAL if view != None and view.canSolve() else tkinter.DISABLED
-        self.btn.config(state=state)
+    def _view_changed(self, view):
+        state = tkinter.NORMAL if view != None and view.can_solve() else tkinter.DISABLED
+        self._btn.config(state=state)
 
-    def solvingChanged(self, solving):
-        self.pressed(solving != None)
+    def _solving_changed(self, solving):
+        self._pressed(solving != None)
         if solving != None:
             solving.start()
 
-    def vitoSolving(self, solving):
+    def _vito_solving(self, solving):
         old = solver.state.solving.value()
         if solving == old:
             return False
@@ -80,5 +84,5 @@ class SolverButton(tkinter.Frame):
         else:
             return False
 
-    def vitoWipe(self, _):
+    def _vito_wipe(self, _):
         return not solver.state.solving.change(None)

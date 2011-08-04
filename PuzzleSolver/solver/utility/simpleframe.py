@@ -14,9 +14,9 @@ class SimpleFrame(tkinter.Frame):
         self.grid_columnconfigure(0, weight=1)
 
         self.content = None
-        self.setContent(init)
+        self.set_content(init)
 
-    def setContent(self, child=None):
+    def set_content(self, child=None):
         if self.content != None:
             self.content.grid_forget()
         self.content = child
