@@ -12,10 +12,10 @@ class UnknownView(solver.plugin.PuzzleView):
 
     def __init__(self, mode):
         solver.plugin.PuzzleView.__init__(self)
-        self.mode = mode
+        self._mode = mode
 
     def get_frame(self, master):
-        txt = "Sorry, this mode is not supported: " + self.mode
+        txt = "Sorry, this mode is not supported: " + self._mode
         return tkinter.Label(master, text=txt)
 
     def can_solve(self): return False
