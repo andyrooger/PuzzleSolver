@@ -56,7 +56,7 @@ class CreationArea(ScrollableWindow):
                 row.append(p)
                 p.grid(sticky="nsew", row=y, column=x)
             self.buttons.append(row)
-        self.setContent(puzzle)
+        self.update_tiles(puzzle)
 
     def saved(self):
         self._changed = False
@@ -64,7 +64,7 @@ class CreationArea(ScrollableWindow):
     def changed(self):
         return self._changed
 
-    def setContent(self, puzzle):
+    def update_tiles(self, puzzle):
         """Tell each tile what their content should be."""
 
         self.player = puzzle.initial().player

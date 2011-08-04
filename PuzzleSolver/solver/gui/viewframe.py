@@ -38,5 +38,5 @@ class ViewFrame(SimpleFrame):
         frame = (
             tkinter.Label(self, text="No puzzle type is currently selected.")
             if view == None else view.get_frame(self))
-        self.setContent(frame)
+        self.set_content(frame)
         return False # do not vito, EVER!

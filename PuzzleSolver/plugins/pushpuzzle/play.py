@@ -53,7 +53,7 @@ class PlaceholderPlayFrame(SimpleFrame):
     def __init__(self, master):
         SimpleFrame.__init__(self, master)
 
-        self.setContent(tkinter.Label(self, text="No puzzle loaded yet."))
+        self.set_content(tkinter.Label(self, text="No puzzle loaded yet."))
 
     def puzzleLoaded(self):
         return isinstance(self.content, PlayFrame)
@@ -84,7 +84,7 @@ class PlaceholderPlayFrame(SimpleFrame):
     def load(self, puzzle):
         try:
             p = PlayFrame(self, puzzle)
-            self.setContent(p)
+            self.set_content(p)
             return True
         except ValueError:
             return False

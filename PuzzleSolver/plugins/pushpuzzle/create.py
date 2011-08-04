@@ -47,8 +47,8 @@ class CreateFrame(SimpleFrame):
         def puzzle_create(r, c):
             p = Puzzle(r, c)
             p.initial().finalise()
-            self.setContent(PuzzleEditor(self, p))
-        self.setContent(DimensionChooser(self, puzzle_create))
+            self.set_content(PuzzleEditor(self, p))
+        self.set_content(DimensionChooser(self, puzzle_create))
 
     def load(self, puzzle):
         try:
@@ -56,7 +56,7 @@ class CreateFrame(SimpleFrame):
         except ValueError:
             return False
         else:
-            self.setContent(puz)
+            self.set_content(puz)
             return True
 
     def get_puzzle(self):
