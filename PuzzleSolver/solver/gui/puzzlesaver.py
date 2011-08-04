@@ -56,7 +56,7 @@ class PuzzleSaver:
             return False
         filename = filedialog.asksaveasfilename(
             defaultextension = ext,
-            filetypes = [(solver.state.puzzle.value().name() + " file", ext)],
+            filetypes = [(solver.state.puzzletype.value().name() + " file", ext)],
             parent = master)
         if not filename:
             return False
@@ -83,7 +83,7 @@ class PuzzleSaver:
             return False
         filename = filedialog.askopenfilename(
             defaultextension = ext,
-            filetypes = [(solver.state.puzzle.value().name() + " file", ext)],
+            filetypes = [(solver.state.puzzletype.value().name() + " file", ext)],
             parent = master)
         if not filename:
             return False

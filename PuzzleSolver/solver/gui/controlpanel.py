@@ -42,7 +42,7 @@ class ControlPanel(tkinter.Frame):
         self._loadBtn = tkinter.Button(self, text="Load", command=self.load)
         self._loadBtn.grid(column=2, row=0, sticky="nsew")
 
-        solver.state.puzzle.on_change(self._puzzle_chosen)
+        solver.state.puzzletype.on_change(self._puzzletype_chosen)
         solver.state.view.on_change(self._view_changed)
 
     def clean(self):
@@ -56,8 +56,8 @@ class ControlPanel(tkinter.Frame):
         if solver.state.wiping.attempt():
             PuzzleSaver().load(self)
 
-    def _puzzle_chosen(self, puzzle):
-        state = tkinter.NORMAL if puzzle != None else tkinter.DISABLED
+    def _puzzletype_chosen(self, puzzletype):
+        state = tkinter.NORMAL if puzzletype != None else tkinter.DISABLED
         self._cleanBtn.configure(state=state)
         self._saveBtn.configure(state=state)
         self._loadBtn.configure(state=state)

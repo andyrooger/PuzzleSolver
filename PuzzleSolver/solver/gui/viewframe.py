@@ -35,14 +35,14 @@ class ViewFrame(SimpleFrame):
         SimpleFrame.__init__(self, master)
 
         solver.state.view.during_change(self._on_view_change)
-        solver.state.puzzle.change(None)
+        solver.state.puzzletype.change(None)
 
-        solver.state.mode.vito_change(self._vito_puzzle_or_mode_change)
-        solver.state.puzzle.vito_change(self._vito_puzzle_or_mode_change)
+        solver.state.mode.vito_change(self._vito_puzzletype_or_mode_change)
+        solver.state.puzzletype.vito_change(self._vito_puzzletype_or_mode_change)
         solver.state.quitting.vito_change(self._vito_quitting)
         solver.state.wiping.vito_change(self._vito_wiping)
 
-    def _vito_puzzle_or_mode_change(self, _):
+    def _vito_puzzletype_or_mode_change(self, _):
         return not solver.state.wiping.attempt()
 
     def _vito_quitting(self, _):
