@@ -46,12 +46,12 @@ def start_gui():
 
     solver.state.quitting.during_change(lambda _: root.destroy())
 
-    def puzzle_change(n_puz):
+    def puzzletype_change(n_puz):
         if n_puz == None:
             root.title(APP_TITLE)
         else:
             root.title(APP_TITLE + " - " + n_puz.name().title())
-    solver.state.puzzle.on_change(puzzle_change)
+    solver.state.puzzletype.on_change(puzzletype_change)
 
     root.protocol("WM_DELETE_WINDOW", solver.state.quitting.attempt)
     appwin = SolverGUI(root)

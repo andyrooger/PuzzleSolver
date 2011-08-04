@@ -68,7 +68,7 @@ class WatchedValue:
 
 # GLOBAL STATE VARIABLES
 
-puzzle = WatchedValue(None)
+puzzletype = WatchedValue(None)
 mode = WatchedValue(None, "CREATE", "PLAY")
 quitting = WatchedValue(None)
 solving = WatchedValue(None) # Holds current solver or None
@@ -76,12 +76,12 @@ wiping = WatchedValue(None) # Wiping puzzle info
 
 view = WatchedValue(plugin.DummyView())
 
-def _update_puzzle(p):
+def _update_puzzletype(p):
     _update_view(p, mode.value())
 def _update_mode(m):
-    _update_view(puzzle.value(), m)
+    _update_view(puzzletype.value(), m)
 def _update_view(p, m):
     view.change(plugin.DummyView() if p == None or m == None else p.get(m))
 
-puzzle.on_change(_update_puzzle)
+puzzletype.on_change(_update_puzzletype)
 mode.on_change(_update_mode)
