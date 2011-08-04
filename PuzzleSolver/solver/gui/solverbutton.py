@@ -23,7 +23,7 @@ class SolverButton(tkinter.Frame):
         self._pressed(solver.state.solving.value() != None)
 
         solver.state.view.on_change(self._view_changed)
-        solver.state.solving.on_change(self._solving_changed)
+        solver.state.solving.during_change(self._solving_changed)
         solver.state.solving.vito_change(self._vito_solving)
         solver.state.wiping.vito_change(self._vito_wipe)
 

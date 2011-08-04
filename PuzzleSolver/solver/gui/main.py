@@ -44,7 +44,7 @@ def start_gui():
     root = tkinter.tix.Tk()
     root.title(APP_TITLE)
 
-    solver.state.quitting.on_change(lambda _: root.destroy())
+    solver.state.quitting.during_change(lambda _: root.destroy())
 
     def puzzle_change(n_puz):
         if n_puz == None:
