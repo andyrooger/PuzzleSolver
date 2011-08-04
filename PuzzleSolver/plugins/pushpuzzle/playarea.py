@@ -13,7 +13,7 @@ from . import style
 from . puzzle import Puzzle
 from . import pathfinder
 
-KEYCODES = {111: "UP", 116: "DOWN", 113: "LEFT", 114: "RIGHT"}
+_KEYCODES = {111: "UP", 116: "DOWN", 113: "LEFT", 114: "RIGHT"}
 
 class PlayArea(ScrollableWindow):
     """GUI component for playing push puzzles."""
@@ -24,100 +24,100 @@ class PlayArea(ScrollableWindow):
         if not isinstance(puzzle, Puzzle) or not puzzle.valid():
             raise ValueError
 
-        self.puzzle = puzzle
-        self.changecb = changecb or (lambda: None)
-        self.automover_cb = None
-        self.frozen = False
+        self._puzzle = puzzle
+        self._changecb = changecb or (lambda: None)
+        self._automover_cb = None
+        self._frozen = False
 
         self.focus_set()
-        self.bind("<Key>", self.keypress)
+        self.bind("<Key>", self._keypress)
 
-        self.createView()
+        self._create_view()
         # now all buttons are created we can centre on the player
         def update_centre(evt=None):
             self.update_idletasks()
-            x, y = self.puzzle.state().player
-            self.centre_on(self.buttons[y][x])
+            x, y = self._puzzle.state().player
+            self.centre_on(self._buttons[y][x])
         self.bind('<Configure>', update_centre)
 
-    def setupTile(self, tile, pos):
+    def _setup_tile(self, tile, pos):
         """Setup view for a single tile."""
 
-        content = ("WALL" if pos in self.puzzle.walls else "EMPTY")
-        if self.puzzle.state().player == pos:
+        content = ("WALL" if pos in self._puzzle.walls else "EMPTY")
+        if self._puzzle.state().player == pos:
             content = "PLAYER"
             self.centre_on(tile)
-        if pos in self.puzzle.state().boxes:
+        if pos in self._puzzle.state().boxes:
             content = "BOX"
-        target = (pos in self.puzzle.targets)
+        target = (pos in self._puzzle.targets)
         tile.config(**style.tile_style(content, target, separated=False))
 
-    def createView(self):
+    def _create_view(self):
         """Create the main part of the GUI."""
 
-        self.buttons = []
-        for y in range(self.puzzle.height):
+        self._buttons = []
+        for y in range(self._puzzle.height):
             row = []
-            for x in range(self.puzzle.width):
-                tile = self.createTile((x,y))
+            for x in range(self._puzzle.width):
+                tile = self._create_tile((x,y))
                 row.append(tile)
                 tile.grid(sticky="nsew", row=y, column=x)
-                self.setupTile(tile, (x, y))
-            self.buttons.append(row)
+                self._setup_tile(tile, (x, y))
+            self._buttons.append(row)
 
-    def updateView(self):
+    def _update_view(self):
         """Update the look of each tile."""
 
-        for y, row in enumerate(self.buttons):
+        for y, row in enumerate(self._buttons):
             for x, tile in enumerate(row):
-                self.setupTile(tile, (x, y))
+                self._setup_tile(tile, (x, y))
 
-    def createTile(self, pos):
+    def _create_tile(self, pos):
         def click():
-            self.clicked(pos)
+            self._clicked(pos)
         btn = tkinter.Button(self.window, relief=tkinter.FLAT, command=click)
         return btn
 
-    def clicked(self, pos):
+    def _clicked(self, pos):
         """One of the tiles has been clicked."""
 
-        if self.frozen:
+        if self._frozen:
             return
 
-        self.automove([])
+        self._automove([])
 
-        player = self.puzzle.state().player
+        player = self._puzzle.state().player
         dist = abs(pos[0] - player[0]) + abs(pos[1] - player[1])
         if dist == 1: # adjacent
             if pos[0] < player[0]:
-                self.automove(["LEFT"])
+                self._automove(["LEFT"])
             elif pos[0] > player[0]:
-                self.automove(["RIGHT"])
+                self._automove(["RIGHT"])
             elif pos[1] < player[1]:
-                self.automove(["UP"])
+                self._automove(["UP"])
             elif pos[1] > player[1]:
-                self.automove(["DOWN"])
+                self._automove(["DOWN"])
             return
 
         # Try long path find, will be None if not accessible
         # Don't worry about blocking, should be fast and we don't want the user to interact in between
-        path = pathfinder.find_path(self.puzzle.state(), pos)
-        self.automove(path or [])
+        path = pathfinder.find_path(self._puzzle.state(), pos)
+        self._automove(path or [])
 
-    def keypress(self, evt):
+    def _keypress(self, evt):
         """A key has been pressed."""
 
-        if self.frozen:
+        if self._frozen:
             return
 
-        if evt.keycode in KEYCODES:
-            self.automove([KEYCODES[evt.keycode]])
+        if evt.keycode in _KEYCODES:
+            self._automove([_KEYCODES[evt.keycode]])
 
-    def automove(self, directions):
+    def _automove(self, directions):
         """Keep calling move at regular intervals until the list is completed."""
         
-        if self.automover_cb != None:
-            self.after_cancel(self.automover_cb)
+        if self._automover_cb != None:
+            self.after_cancel(self._automover_cb)
         if directions:
             directions.reverse()
             self._automover(directions)
@@ -126,70 +126,70 @@ class PlayArea(ScrollableWindow):
         """Performs the given moves at regular intervals."""
         
         dir = directions.pop()
-        self.move(dir)
+        self._move(dir)
         
         if directions:
-            self.automover_cb = self.after(100, self._automover, directions)
+            self._automover_cb = self.after(100, self._automover, directions)
 
-    def move(self, direction):
+    def _move(self, direction):
         """Move the player if possible."""
 
-        if self.puzzle.state().goal():
+        if self._puzzle.state().goal():
             return
 
-        current = self.puzzle.state().player
-        to = self.puzzle.adjacent(current, direction)
+        current = self._puzzle.state().player
+        to = self._puzzle.adjacent(current, direction)
 
         if to == None:
             return False
 
         boxto = None
 
-        if to not in self.puzzle.state().accessible: # not accessible
-            if to not in self.puzzle.state().boxes: # and not pushing box
+        if to not in self._puzzle.state().accessible: # not accessible
+            if to not in self._puzzle.state().boxes: # and not pushing box
                 return False
-            boxto = self.puzzle.adjacent(to, direction)
+            boxto = self._puzzle.adjacent(to, direction)
             if boxto == None: # box not moving inside play area
                 return False
-            if boxto in self.puzzle.state().boxes or boxto in self.puzzle.walls: # box moving into resistance
+            if boxto in self._puzzle.state().boxes or boxto in self._puzzle.walls: # box moving into resistance
                 return False
 
         if boxto == None:
-            self.puzzle.add_state(to)
+            self._puzzle.add_state(to)
         else:
-            self.puzzle.add_state()
-            self.puzzle.state().boxes.remove(to)
-            self.puzzle.state().boxes.add(boxto)
-            self.puzzle.state().player = to
-            self.puzzle.state().finalise()
+            self._puzzle.add_state()
+            self._puzzle.state().boxes.remove(to)
+            self._puzzle.state().boxes.add(boxto)
+            self._puzzle.state().player = to
+            self._puzzle.state().finalise()
             
-        self.updateView()
-        self.changecb()
+        self._update_view()
+        self._changecb()
         
         
         # don't actually need first if, but saves checking completely for goal
-        if boxto in self.puzzle.targets:
-            if self.puzzle.state().goal():
+        if boxto in self._puzzle.targets:
+            if self._puzzle.state().goal():
                 messagebox.showinfo("Congratulations", "Well done, you completed the puzzle!")
         return True
 
     def freeze(self, frozen):
-        self.frozen = frozen
+        self._frozen = frozen
 
     def rewind(self):
         """Go to the beginning of the play area."""
 
-        self.automove([])
-        self.puzzle.cursor(0)
-        self.updateView()
+        self._automove([])
+        self._puzzle.cursor(0)
+        self._update_view()
 
     def next(self):
         """Go to the next state. Return whether successful."""
         
-        self.automove([])
+        self._automove([])
         try:
-            self.puzzle.cursor(self.puzzle.cursor()+1)
-            self.updateView()
+            self._puzzle.cursor(self._puzzle.cursor()+1)
+            self._update_view()
             return True
         except IndexError:
             return False
@@ -197,15 +197,15 @@ class PlayArea(ScrollableWindow):
     def hasnext(self):
         """Do we have a next state?"""
 
-        return self.puzzle.cursor()+1 < len(self.puzzle)
+        return self._puzzle.cursor()+1 < len(self._puzzle)
 
     def prev(self):
         """Go to previous state. Returns whether successful."""
 
-        self.automove([])
+        self._automove([])
         try:
-            self.puzzle.cursor(self.puzzle.cursor()-1)
-            self.updateView()
+            self._puzzle.cursor(self._puzzle.cursor()-1)
+            self._update_view()
             return True
         except IndexError:
             return False
@@ -213,14 +213,14 @@ class PlayArea(ScrollableWindow):
     def hasprev(self):
         """Do we have a previous state?"""
 
-        return self.puzzle.cursor() > 0
+        return self._puzzle.cursor() > 0
 
     def metrics(self):
         """Return useful info about the puzzle state."""
 
         return {
-            "move": self.puzzle.cursor()+1,
-            "total": len(self.puzzle),
-            "targets": len(self.puzzle.targets),
-            "filled": len(self.puzzle.targets.intersection(self.puzzle.state().boxes))
+            "move": self._puzzle.cursor()+1,
+            "total": len(self._puzzle),
+            "targets": len(self._puzzle.targets),
+            "filled": len(self._puzzle.targets.intersection(self._puzzle.state().boxes))
         }
