@@ -30,7 +30,7 @@ class PushAStar:
     def result(self):
         """If the solver has completed, return directions/None. Raises IncompleteError otherwise."""
         
-        return []
+        return None
         
 class IncompleteError(Exception):
     """Thrown when a result is requested and the operation is not yet complete."""
