@@ -130,7 +130,7 @@ class PlayFrame(tkinter.Frame):
         self._status["text"] = "Targets: %(filled)s/%(targets)s  -  Moves: %(move)s/%(total)s" % info
 
     def get_solver(self):
-        return PushSolver(self.freeze, self.get_puzzle, self._playarea.automove)
+        return PushSolver(self, self._playarea.automove)
 
     def changed(self):
         return self._changed
