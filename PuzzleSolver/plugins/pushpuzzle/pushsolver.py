@@ -53,11 +53,40 @@ class SolverStatusDialog(tkinter.Toplevel):
         self.grab_set()
         self.transient(master)
         
-        tkinter.Label(self, text="Progress").grid()
-        tkinter.Button(self, text="Cancel", command=self.cancel).grid()
-        self.wait_window(self)
+        self._status = tkinter.Label(self, text="Progress")
+        self._status.grid(row=0, column=0, columnspan=2, sticky="nsew")
+        self._demo = tkinter.Button(self, text="Demonstrate", command=self.demo, state=tkinter.DISABLED)
+        self._demo.grid(row=1, column=0)
+        tkinter.Button(self, text="Cancel", command=self.cancel).grid(row=1, column=1)
+        self._periodic_update()
         
+    def demo(self):
+        """Demonstrate the solution."""
+        
+        solver.state.solving.change(None) # should always work
+        try:
+            solution = self._solver.result()
+        except pushastar.IncompleteError:
+            pass
+        else:
+            if solution != None:
+                self._finished(solution)
+        self.destroy()
         
     def cancel(self):
+        """Cancel the solver whether or not it is running."""
+        
         if solver.state.solving.change(None):
             self.destroy()
+
+    def _periodic_update(self):
+        """Update the dialog."""
+        
+        # Should be already solving or finished
+        if not self._solver.solving():
+            self._status.config(text="Finished")
+            if self._solver.result() != None:
+                self._demo.config(state=tkinter.NORMAL)
+        else:
+            self._status.config(text="Still solving")
+            self.after(1000, self._periodic_update)
