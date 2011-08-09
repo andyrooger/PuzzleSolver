@@ -224,6 +224,7 @@ class PlayArea(ScrollableWindow):
 
         return {
             "move": self._puzzle.cursor()+1,
+            "separation": self._puzzle.state().separation(),
             "total": len(self._puzzle),
             "targets": len(self._puzzle.targets),
             "filled": len(self._puzzle.targets.intersection(self._puzzle.state().boxes))

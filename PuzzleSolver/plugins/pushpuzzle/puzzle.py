@@ -130,7 +130,34 @@ class PuzzleState:
             return False
 
         return True
-
+    
+    def separation(self):
+        """Return the total separation of the boxes from targets."""
+        totalSeparation = 0
+        targets = set(self.parent.targets)
+        
+        for box in self.boxes:
+            nearestTarget = self.findNearest(targets,box)
+            assert nearestTarget, "More boxes than targets"
+            targets.discard(nearestTarget)
+            totalSeparation += self.getDistance(nearestTarget,box)
+            
+        return totalSeparation
+    
+    def getDistance(self, object1, object2):
+        xDist = object1[0]-object2[0]
+        yDist = object1[1]-object2[1]
+        return abs(xDist) + abs(yDist)
+    
+    def findNearest(self, rabbits, dog):
+        if not rabbits:
+            return None
+        nearestRabbitDistance = min(self.getDistance(rabbit,dog) for rabbit in rabbits) 
+        for rabbit in rabbits:
+            if self.getDistance(rabbit,dog) == nearestRabbitDistance:
+                return rabbit
+            
+        
     def _record_accessibility(self):
         """Create and record a set describing accessible coordinates from this state."""
         

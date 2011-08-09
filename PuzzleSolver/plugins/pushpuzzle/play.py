@@ -127,7 +127,7 @@ class PlayFrame(tkinter.Frame):
         ))
 
         info = self._playarea.metrics()
-        self._status["text"] = "Targets: %(filled)s/%(targets)s  -  Moves: %(move)s/%(total)s" % info
+        self._status["text"] = "Targets: %(filled)s/%(targets)s  -  Separation: %(separation)s  -  Moves: %(move)s/%(total)s" % info
 
     def get_solver(self):
         return PushSolver(self, self._playarea.automove)
