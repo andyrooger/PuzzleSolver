@@ -48,9 +48,9 @@ class CreationArea(ScrollableWindow):
 
         self._getmode = getmode
         self._buttons = []
-        for y in range(puzzle.height):
+        for y in range(puzzle.base.height):
             row = []
-            for x in range(puzzle.width):
+            for x in range(puzzle.base.width):
                 pos = (x, y)
                 p = PuzzleTile(self.window, pos, clicked=self._click)
                 row.append(p)
@@ -69,9 +69,9 @@ class CreationArea(ScrollableWindow):
 
         self._player = puzzle.initial().player
 
-        for x,y in puzzle.walls:
+        for x,y in puzzle.base.walls:
             self._buttons[y][x].content("WALL")
-        for x,y in puzzle.targets:
+        for x,y in puzzle.base.targets:
             self._buttons[y][x].target(True)
         for x,y in puzzle.initial().boxes:
             self._buttons[y][x].content("BOX")
@@ -129,9 +129,9 @@ class CreationArea(ScrollableWindow):
                 elif tile.content() == "BOX":
                     p.initial().boxes.add(tile.pos)
                 elif tile.content() == "WALL":
-                    p.walls.add(tile.pos)
+                    p.base.walls.add(tile.pos)
                 if tile.target():
-                    p.targets.add(tile.pos)
+                    p.base.targets.add(tile.pos)
         p.initial().finalise()
         return p
 

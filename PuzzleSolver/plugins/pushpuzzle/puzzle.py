@@ -5,14 +5,70 @@ Contains the structures to store our puzzles in.
 
 class Puzzle:
     """Main class for storing our puzzles."""
+    
+    def __init__(self, h, w):
+        self.base = PuzzleDescription(h, w)
+        self._states = [PuzzleState(self.base)]
+        self._curstate = 0
+        
+    def valid(self, children=True):
+        """Is this a valid setup?"""
 
+        if not self.base.valid():
+            return False
+
+        if children:
+            if not all(s.valid() for s in self._states):
+                return False
+
+            # All checked against targets in their individual valid functions
+            #num_boxes = len(self.initial().boxes)
+            #if not all(num_boxes == len(s.boxes) for s in self._states):
+            #    return False
+
+        return True
+    
+    def initial(self):
+        """Get the initial puzzle state."""
+
+        return self._states[0]
+
+    def state(self):
+        """Get the current puzzle state."""
+
+        return self._states[self._curstate]
+
+    def cursor(self, cur=None):
+        if cur != None:
+            if cur < 0 or cur >= len(self):
+                raise IndexError
+            self._curstate = cur
+        return self._curstate
+    
+    def add_state(self, player=None):
+        """
+        Add a new state identical to the current after our current state and remove any following.
+        
+        If not done already, the current state is finalised. If player is given then the new state
+        will be finalised and the only change will be the player. Otherwise it will be left
+        unfinalised.
+        
+        """
+
+        self.state().finalise()
+
+        self._states[self._curstate+1:] = [self.state().copy(player)]
+        self._curstate = len(self)-1
+        
+    def __len__(self):
+        return len(self._states)
+
+class PuzzleDescription:
     def __init__(self, h, w):
         self.height = h
         self.width = w
         self.walls = set()
         self.targets = set()
-        self._states = [PuzzleState(self)]
-        self._curstate = 0
 
     def in_area(self, x, y):
         """Are the given coordinates within our range?"""
@@ -43,57 +99,16 @@ class Puzzle:
         if not all(self.in_area(x, y) for x, y in self.walls.union(self.targets)):
             return False
 
-        if children and not all(s.valid() for s in self._states):
-            return False
-
         if self.walls.intersection(self.targets):
-            return False
-
-        if children and not all(len(self._states[0].boxes) == len(s.boxes) for s in self._states):
             return False
 
         return True
 
-    def initial(self):
-        """Get the initial puzzle state."""
-
-        return self._states[0]
-
-    def state(self):
-        """Get the current puzzle state."""
-
-        return self._states[self._curstate]
-
-    def cursor(self, cur=None):
-        if cur != None:
-            if cur < 0 or cur >= len(self):
-                raise IndexError
-            self._curstate = cur
-        return self._curstate
-
-    def add_state(self, player=None):
-        """
-        Add a new state identical to the current after our current state and remove any following.
-        
-        If not done already, the current state is finalised. If player is given then the new state
-        will be finalised and the only change will be the player. Otherwise it will be left
-        unfinalised.
-        
-        """
-
-        self.state().finalise()
-
-        self._states[self._curstate+1:] = [self.state().copy(player)]
-        self._curstate = len(self)-1
-
-    def __len__(self):
-        return len(self._states)
-
 class PuzzleState:
     """Information on parts of the puzzle that can change during the play."""
 
-    def __init__(self, parent):
-        self.parent = parent
+    def __init__(self, base):
+        self.base = base
         self.player = None
         self.boxes = set()
         self.finalised = False
@@ -114,19 +129,19 @@ class PuzzleState:
         self.finalised = True
 
     def valid(self):
-        if self.player == None or not self.parent.in_area(*self.player):
+        if self.player == None or not self.base.in_area(*self.player):
             return False
 
-        if len(self.boxes) != len(self.parent.targets):
+        if len(self.boxes) != len(self.base.targets):
             return False
 
-        if not all(self.parent.in_area(x, y) for (x, y) in self.boxes):
+        if not all(self.base.in_area(x, y) for (x, y) in self.boxes):
             return False
 
-        if self.player in self.parent.walls.union(self.boxes):
+        if self.player in self.base.walls.union(self.boxes):
             return False
 
-        if self.boxes.intersection(self.parent.walls):
+        if self.boxes.intersection(self.base.walls):
             return False
 
         return True
@@ -143,11 +158,11 @@ class PuzzleState:
         tocheck = [self.player]
         while tocheck:
             pos = tocheck.pop()
-            if not self.parent.in_area(*pos):
+            if not self.base.in_area(*pos):
                 continue
             if pos in accessible:
                 continue
-            if pos in self.parent.walls:
+            if pos in self.base.walls:
                 continue
             if pos in self.boxes:
                 continue
@@ -159,7 +174,7 @@ class PuzzleState:
     def goal(self):
         """Have we achieved our goal?"""
 
-        return self.parent.targets == self.boxes
+        return self.base.targets == self.boxes
 
     def copy(self, player=None):
         """
@@ -178,7 +193,7 @@ class PuzzleState:
         
         """
 
-        p = PuzzleState(self.parent)
+        p = PuzzleState(self.base)
         if not self.finalised:
             p.player = player or self.player
             p.boxes = set(self.boxes)

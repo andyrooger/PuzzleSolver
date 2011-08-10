@@ -13,7 +13,7 @@ def manhattan_distance(frm, to):
 def state_path_finder(state, to):
     """Generate a path finder from a puzzle state (or None if to is not accessible)."""
     
-    puzzle = state.parent
+    base = state.base
     if not state.finalised:
         raise ValueError("State has not been finalised so we cannot path-find.")
     if to not in state.accessible:
@@ -23,7 +23,7 @@ def state_path_finder(state, to):
     goal = lambda pos: pos[0] == to
     heuristic = lambda pos: manhattan_distance(pos[0], to)
     def transitions(pos):
-        pos_dir = [(puzzle.adjacent(pos[0], dir), dir) for dir in ["UP", "DOWN", "LEFT", "RIGHT"]]
+        pos_dir = [(base.adjacent(pos[0], dir), dir) for dir in ["UP", "DOWN", "LEFT", "RIGHT"]]
         return [(p, 1) for p in pos_dir if p[0] != None and p[0] in state.accessible]
     
     return astar.AStar(initial, goal, heuristic, transitions)

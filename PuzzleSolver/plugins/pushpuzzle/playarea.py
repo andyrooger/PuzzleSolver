@@ -43,22 +43,22 @@ class PlayArea(ScrollableWindow):
     def _setup_tile(self, tile, pos):
         """Setup view for a single tile."""
 
-        content = ("WALL" if pos in self._puzzle.walls else "EMPTY")
+        content = ("WALL" if pos in self._puzzle.base.walls else "EMPTY")
         if self._puzzle.state().player == pos:
             content = "PLAYER"
             self.centre_on(tile)
         if pos in self._puzzle.state().boxes:
             content = "BOX"
-        target = (pos in self._puzzle.targets)
+        target = (pos in self._puzzle.base.targets)
         tile.config(**style.tile_style(content, target, separated=False))
 
     def _create_view(self):
         """Create the main part of the GUI."""
 
         self._buttons = []
-        for y in range(self._puzzle.height):
+        for y in range(self._puzzle.base.height):
             row = []
-            for x in range(self._puzzle.width):
+            for x in range(self._puzzle.base.width):
                 tile = self._create_tile((x,y))
                 row.append(tile)
                 tile.grid(sticky="nsew", row=y, column=x)
@@ -138,7 +138,7 @@ class PlayArea(ScrollableWindow):
             return
 
         current = self._puzzle.state().player
-        to = self._puzzle.adjacent(current, direction)
+        to = self._puzzle.base.adjacent(current, direction)
 
         if to == None:
             return False
@@ -148,10 +148,10 @@ class PlayArea(ScrollableWindow):
         if to not in self._puzzle.state().accessible: # not accessible
             if to not in self._puzzle.state().boxes: # and not pushing box
                 return False
-            boxto = self._puzzle.adjacent(to, direction)
+            boxto = self._puzzle.base.adjacent(to, direction)
             if boxto == None: # box not moving inside play area
                 return False
-            if boxto in self._puzzle.state().boxes or boxto in self._puzzle.walls: # box moving into resistance
+            if boxto in self._puzzle.state().boxes or boxto in self._puzzle.base.walls: # box moving into resistance
                 return False
 
         if boxto == None:
@@ -168,7 +168,7 @@ class PlayArea(ScrollableWindow):
         
         
         # don't actually need first if, but saves checking completely for goal
-        if boxto in self._puzzle.targets:
+        if boxto in self._puzzle.base.targets:
             if self._puzzle.state().goal():
                 messagebox.showinfo("Congratulations", "Well done, you completed the puzzle!")
         return True
@@ -225,6 +225,6 @@ class PlayArea(ScrollableWindow):
         return {
             "move": self._puzzle.cursor()+1,
             "total": len(self._puzzle),
-            "targets": len(self._puzzle.targets),
-            "filled": len(self._puzzle.targets.intersection(self._puzzle.state().boxes))
+            "targets": len(self._puzzle.base.targets),
+            "filled": len(self._puzzle.base.targets.intersection(self._puzzle.state().boxes))
         }
