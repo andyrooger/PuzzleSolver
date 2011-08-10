@@ -4,6 +4,7 @@ Contains the structures to store our puzzles in.
 """
 
 from . import directions
+from plugins.pushpuzzle import directions
 
 class Puzzle:
     """Main class for storing our puzzles."""
@@ -72,9 +73,10 @@ class PuzzleDescription:
         self.walls = set()
         self.targets = set()
 
-    def in_area(self, x, y):
+    def in_area(self, pos):
         """Are the given coordinates within our range?"""
 
+        x, y = pos
         if x < 0 or x >= self.width:
             return False
         if y < 0 or y >= self.height:
@@ -84,7 +86,7 @@ class PuzzleDescription:
     def valid(self, children=True):
         """Is this a valid setup?"""
 
-        if not all(self.in_area(x, y) for x, y in self.walls.union(self.targets)):
+        if not all(self.in_area(pos) for pos in self.walls.union(self.targets)):
             return False
 
         if self.walls.intersection(self.targets):
@@ -117,13 +119,13 @@ class PuzzleState:
         self.finalised = True
 
     def valid(self):
-        if self.player == None or not self.base.in_area(*self.player):
+        if self.player == None or not self.base.in_area(self.player):
             return False
 
         if len(self.boxes) != len(self.base.targets):
             return False
 
-        if not all(self.base.in_area(x, y) for (x, y) in self.boxes):
+        if not all(self.base.in_area(pos) for pos in self.boxes):
             return False
 
         if self.player in self.base.walls.union(self.boxes):
@@ -146,7 +148,7 @@ class PuzzleState:
         tocheck = [self.player]
         while tocheck:
             pos = tocheck.pop()
-            if not self.base.in_area(*pos):
+            if not self.base.in_area(pos):
                 continue
             if pos in accessible:
                 continue
@@ -158,6 +160,25 @@ class PuzzleState:
             x, y = pos
             tocheck += [(x-1,y), (x+1,y), (x,y-1), (x,y+1)]
         self.accessible = frozenset(accessible)
+
+    def cleared_square(self, pos):
+        """Is this a valid square with nothing on it."""
+        
+        return (self.base.in_area(pos) and
+                pos not in self.boxes and
+                pos not in self.base.walls)
+
+    def can_move_box(self, box, direction):
+        """Assuming box is a box, can we move it in the given direction?"""
+        
+        pushfrom = directions.adjacent(box, directions.opposite(direction))
+        if pushfrom not in self.accessible:
+            return False
+        boxto = directions.adjacent(box, direction)
+        if not self.cleared_square(boxto):
+            return False
+        
+        return True
 
     def goal(self):
         """Have we achieved our goal?"""

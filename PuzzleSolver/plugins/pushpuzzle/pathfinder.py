@@ -15,7 +15,6 @@ def manhattan_distance(frm, to):
 def state_path_finder(state, to):
     """Generate a path finder from a puzzle state (or None if to is not accessible)."""
     
-    base = state.base
     if not state.finalised:
         raise ValueError("State has not been finalised so we cannot path-find.")
     if to not in state.accessible:

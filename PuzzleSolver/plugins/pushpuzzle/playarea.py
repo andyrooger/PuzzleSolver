@@ -141,7 +141,7 @@ class PlayArea(ScrollableWindow):
         current = self._puzzle.state().player
         to = directions.adjacent(current, direction)
 
-        if not self._puzzle.base.in_area(*to):
+        if not self._puzzle.base.in_area(to):
             return False
 
         boxto = None
@@ -150,9 +150,7 @@ class PlayArea(ScrollableWindow):
             if to not in self._puzzle.state().boxes: # and not pushing box
                 return False
             boxto = directions.adjacent(to, direction)
-            if not self._puzzle.base.in_area(*boxto): # box not moving inside play area
-                return False
-            if boxto in self._puzzle.state().boxes or boxto in self._puzzle.base.walls: # box moving into resistance
+            if not self._puzzle.state().cleared_square(boxto): # box moving into resistance
                 return False
 
         if boxto == None:
