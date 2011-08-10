@@ -12,6 +12,7 @@ from solver.utility.scrollable_window import ScrollableWindow
 from . import style
 from . puzzle import Puzzle
 from . import pathfinder
+from . import directions
 
 _KEYCODES = {111: "UP", 116: "DOWN", 113: "LEFT", 114: "RIGHT"}
 
@@ -113,23 +114,23 @@ class PlayArea(ScrollableWindow):
         if evt.keycode in _KEYCODES:
             self.automove([_KEYCODES[evt.keycode]])
 
-    def automove(self, directions):
+    def automove(self, dirs):
         """Keep calling move at regular intervals until the list is completed."""
         
         if self._automover_cb != None:
             self.after_cancel(self._automover_cb)
-        if directions:
-            directions.reverse()
-            self._automover(directions)
+        if dirs:
+            dirs.reverse()
+            self._automover(dirs)
         
-    def _automover(self, directions):
+    def _automover(self, dirs):
         """Performs the given moves at regular intervals."""
         
-        dir = directions.pop()
+        dir = dirs.pop()
         self._move(dir)
         
-        if directions:
-            self._automover_cb = self.after(100, self._automover, directions)
+        if dirs:
+            self._automover_cb = self.after(100, self._automover, dirs)
 
     def _move(self, direction):
         """Move the player if possible."""
@@ -138,9 +139,9 @@ class PlayArea(ScrollableWindow):
             return
 
         current = self._puzzle.state().player
-        to = self._puzzle.base.adjacent(current, direction)
+        to = directions.adjacent(current, direction)
 
-        if to == None:
+        if not self._puzzle.base.in_area(*to):
             return False
 
         boxto = None
@@ -148,8 +149,8 @@ class PlayArea(ScrollableWindow):
         if to not in self._puzzle.state().accessible: # not accessible
             if to not in self._puzzle.state().boxes: # and not pushing box
                 return False
-            boxto = self._puzzle.base.adjacent(to, direction)
-            if boxto == None: # box not moving inside play area
+            boxto = directions.adjacent(to, direction)
+            if not self._puzzle.base.in_area(*boxto): # box not moving inside play area
                 return False
             if boxto in self._puzzle.state().boxes or boxto in self._puzzle.base.walls: # box moving into resistance
                 return False

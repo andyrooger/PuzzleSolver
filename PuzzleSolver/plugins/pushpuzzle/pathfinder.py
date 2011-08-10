@@ -5,6 +5,8 @@ Use AStar utility to path find.
 
 from solver.utility import astar
 
+from . import directions
+
 # For a path finder, the state is (state, move to get here)
 
 def manhattan_distance(frm, to):
@@ -23,8 +25,9 @@ def state_path_finder(state, to):
     goal = lambda pos: pos[0] == to
     heuristic = lambda pos: manhattan_distance(pos[0], to)
     def transitions(pos):
-        pos_dir = [(base.adjacent(pos[0], dir), dir) for dir in ["UP", "DOWN", "LEFT", "RIGHT"]]
-        return [(p, 1) for p in pos_dir if p[0] != None and p[0] in state.accessible]
+        dirs = directions.adjacent(pos[0])
+        pos_dir = [(dirs[k], k) for k in dirs]
+        return [(p, 1) for p in pos_dir if p[0] in state.accessible]
     
     return astar.AStar(initial, goal, heuristic, transitions)
 

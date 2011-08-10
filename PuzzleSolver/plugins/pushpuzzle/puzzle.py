@@ -3,6 +3,8 @@ Contains the structures to store our puzzles in.
 
 """
 
+from . import directions
+
 class Puzzle:
     """Main class for storing our puzzles."""
     
@@ -78,20 +80,6 @@ class PuzzleDescription:
         if y < 0 or y >= self.height:
             return False
         return True
-
-    def adjacent(self, pos, direction):
-        """Return the position adjacent to our position in the corresponding direction."""
-
-        if direction == "UP":
-            return (pos[0], pos[1]-1) if pos[1] > 0 else None
-        elif direction == "DOWN":
-            return (pos[0], pos[1]+1) if pos[1] < self.height-1 else None
-        elif direction == "LEFT":
-            return (pos[0]-1, pos[1]) if pos[0] > 0 else None
-        elif direction == "RIGHT":
-            return (pos[0]+1, pos[1]) if pos[0] < self.width-1 else None
-        else:
-            return None
 
     def valid(self, children=True):
         """Is this a valid setup?"""
