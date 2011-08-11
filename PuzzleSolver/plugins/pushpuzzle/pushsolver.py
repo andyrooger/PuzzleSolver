@@ -7,7 +7,7 @@ import tkinter
 
 import solver.plugin
 import solver.state
-from solver.utility import process_exec
+from solver.utility import process_exec, simpleframe, buttonselector
 
 from . import pushastar
 
@@ -24,11 +24,16 @@ class PushSolver(solver.plugin.Solver):
         """Start the push puzzle solver."""
         
         self._playframe.freeze(True)
-        self._solver = process_exec.ProcessExecutor(
-            pushastar.solve,
-            self._playframe.get_puzzle().state())
-        self._solver.start()
-        SolverStatusDialog(self._playframe, self._solver, self._finished)
+        
+        def make_solver(*vargs, **kwargs):
+            self._solver = process_exec.ProcessExecutor(
+                pushastar.solve,
+                self._playframe.get_puzzle().state(),
+                *vargs, **kwargs)
+            self._solver.start()
+            SolverStatusDialog(self._playframe, self._solver, self._finished)
+            
+        SolverConfig(self._playframe, make_solver)
     
     def stop(self):
         """
@@ -96,3 +101,58 @@ class SolverStatusDialog(tkinter.Toplevel):
         else:
             self._status.config(text="Still solving")
             self.after(1000, self._periodic_update)
+
+class SolverConfig(tkinter.Toplevel):
+    """Deals with configuration for the solver, choosing solver classes and heuristics."""
+    
+    def __init__(self, master, done):
+        tkinter.Toplevel.__init__(self, master)
+        
+        self._done = done
+        
+        self.title("Solver configuration")
+        self.grab_set()
+        self.transient(master)
+        self.protocol("WM_DELETE_WINDOW", (lambda: False))
+        
+        self.rowconfigure(1, weight=1)
+        self.columnconfigure(1, weight=1)
+        
+        self._question = tkinter.Label(self)
+        self._question.grid(sticky="new")
+        self._content = simpleframe.SimpleFrame(self)
+        self._content.grid(sticky="nsew")
+        
+        self._ask_initial()
+        
+    def ask(self, question, answers, callback=None):
+        """Ask a question."""
+        
+        self._question.config(text=question)
+        print(callback)
+        selector = buttonselector.ButtonSelector(self._content, vertical=True, selected=callback)
+        for a in answers:
+            selector.add(a, answers[a])
+        self._content.set_content(selector)
+        
+    def finish(self, *vargs, **kwargs):
+        """Spit out the given solver arguments."""
+        
+        self.destroy()
+        self._done(*vargs, **kwargs)
+        
+    def _ask_initial(self):
+        self.ask("Would you like to use solver defaults or manage this by your self?",
+                 {
+                  "Use Defaults": True,
+                  "Configure on my Own.": False
+                 },
+                 callback=self._configure_defaults)
+        
+    def _configure_defaults(self, usedefaults):
+        if usedefaults:
+            h = (lambda s: pushastar.matched_separation(
+                pushastar.far_match, pushastar.manhattan_dist, s))
+            self.finish(h, pushastar.AStar)
+        else:
+            self.finish() # We want to ask more questions
