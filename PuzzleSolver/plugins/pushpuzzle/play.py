@@ -139,7 +139,7 @@ class PlayFrame(tkinter.Frame):
         self._changed = False
 
     def get_puzzle(self):
-        return None # TODO - maybe
+        return self._playarea.get_puzzle()
 
     def clean(self):
         self._playarea.rewind()

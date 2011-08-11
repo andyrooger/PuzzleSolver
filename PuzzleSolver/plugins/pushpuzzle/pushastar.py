@@ -3,23 +3,56 @@ Uses AStar to asynchronously solve a push puzzle.
 
 """
 
+from solver.utility.astar import AStar
+from astartest import goal, transitions
+from solver.utility import process_exec
+
 class PushAStar:
     """Asynchronously solves a puzzle."""
     
-    def __init__(self, puzzle):
+    def __init__(self, puzzle, solver_class=AStar, **extra_args):
         self._puzzle = puzzle
+        self._solver_class = solver_class
+        self._solver_args = extra_args
+        self._solver_process = None
 
     def begin(self):
         """Start the solving process."""
         
+        assert self._solver_process == None, "Solver already running."
+        
+        self._solver_process = process_exec.ProcessExecutor(
+            self._solve_worker, self._puzzle.state()
+        )
+        self._solver_process.start()
+        
+    def _solve_worker(self, initial):
+        def goal(state):
+            return state.goal()
+        
+        def heuristic(state):
+            return 0
+        
+        def transitions(state):
+            return []
+        
+        return self._solver_class(initial, goal, heuristic, transitions, **self._solver_args).solve()
+        
     def cancel(self):
         """Try to stop the solving process and return whether successful."""
+        
+        if self._solver_process != None:
+            # TODO: Terminate properly, do not orphan children!
+            self._solver_process.cancel()
+            self._solver_process = None
         
         return True
         
     def solving(self):
         """Check if the solver is currently running."""
         
+        if self._solver_process != None:
+            return self._solver_process.working()
         return False
         
     def status(self):
@@ -30,7 +63,13 @@ class PushAStar:
     def result(self):
         """If the solver has completed, return directions/None. Raises IncompleteError otherwise."""
         
-        return None
+        if self._solver_process != None:
+            try:
+                return self._solver_process.result()
+            except process_exec.IncompleteError:
+                pass
+        
+        raise IncompleteError    
         
 class IncompleteError(Exception):
     """Thrown when a result is requested and the operation is not yet complete."""
