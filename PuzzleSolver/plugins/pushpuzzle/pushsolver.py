@@ -54,6 +54,7 @@ class SolverStatusDialog(tkinter.Toplevel):
         self.title("Solving...")
         self.grab_set()
         self.transient(master)
+        self.protocol("WM_DELETE_WINDOW", self.cancel)
         
         self._status = tkinter.Label(self, text="Progress")
         self._status.grid(row=0, column=0, columnspan=2, sticky="nsew")
@@ -91,7 +92,7 @@ class SolverStatusDialog(tkinter.Toplevel):
                 if self._solver.result() != None:
                     self._demo.config(state=tkinter.NORMAL)
             except process_exec.IncompleteError:
-                self._status.config(text="Cancelled")
+                self._status.config(text="Something went horribly wrong!")
         else:
             self._status.config(text="Still solving")
             self.after(1000, self._periodic_update)

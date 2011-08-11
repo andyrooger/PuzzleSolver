@@ -6,11 +6,15 @@ Similar to future but doesn't keep shouting about obscure errors.
 from multiprocessing import Queue, Process
 
 class ProcessExecutor:
-    def __init__(self, func, *vargs, **kwargs):
+    def __init__(self, func, *vargs, hideerror=False, **kwargs):
         self._q = Queue()
-        def worker(func, q, vargs, kwargs):
-            q.put(func(*vargs, **kwargs))
-        self._proc = Process(target=worker, args=[func, self._q, vargs, kwargs])
+        def worker(func, q, hideerror, vargs, kwargs):
+            try:
+                q.put(func(*vargs, **kwargs))
+            except:
+                if not hideerror:
+                    raise
+        self._proc = Process(target=worker, args=[func, self._q, hideerror, vargs, kwargs])
         
     def start(self):
         self._proc.start()
