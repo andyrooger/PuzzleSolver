@@ -105,14 +105,25 @@ def close_match(primary, secondary, dist):
     
     total = 0
     while p_set and s_set:
-        closest = min(((p, s) for p in p_set for s in s_set),
-                      key=(lambda pair: distances[pair]))
+        closest = min( ((p, s) for p in p_set for s in s_set), key=distances.get)
         total += distances[closest]
         p_set.remove(closest[0])
         s_set.remove(closest[1])
 
     return total
-            
+
+def shift_sum(state):
+    """Align targets and boxes in a single dimensions and sum the distances in these dimensions."""
+
+    # Actually only need to sort coordinates, not boxes
+    box_x, box_y = zip(*state.boxes)
+    target_x, target_y = zip(*state.base.targets)
+    
+    absdiff = (lambda x, y: abs(x-y))
+    xs = map(absdiff, sorted(box_x), sorted(target_x))
+    ys = map(absdiff, sorted(box_y), sorted(target_y))
+    
+    return sum(xs) + sum(ys)
 
 ####
 #
