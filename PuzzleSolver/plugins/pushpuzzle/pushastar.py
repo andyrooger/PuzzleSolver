@@ -6,6 +6,7 @@ Uses AStar to asynchronously solve a push puzzle.
 from solver.utility.astar import AStar
 from astartest import goal, transitions
 from solver.utility import process_exec
+from plugins.pushpuzzle import directions
 
 class PushAStar:
     """Asynchronously solves a puzzle."""
@@ -34,7 +35,15 @@ class PushAStar:
             return 0
         
         def transitions(state):
-            return []
+            for box in state.boxes:
+                for dir in directions.DIRECTIONS:
+                    if state.can_move_box(box, dir):
+                        new_state = state.copy()
+                        new_state.boxes.remove(box)
+                        new_state.boxes.add(directions.adjacent(box, dir))
+                        new_state.player = box
+                        new_state.finalise()
+                        yield (new_state, 1) # TODO maybe work out real distance?
         
         return self._solver_class(initial, goal, heuristic, transitions, **self._solver_args).solve()
         
@@ -69,7 +78,7 @@ class PushAStar:
             except process_exec.IncompleteError:
                 pass
         
-        raise IncompleteError    
+        raise IncompleteError
         
 class IncompleteError(Exception):
     """Thrown when a result is requested and the operation is not yet complete."""

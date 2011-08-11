@@ -85,8 +85,11 @@ class SolverStatusDialog(tkinter.Toplevel):
         # Should be already solving or finished
         if not self._solver.solving():
             self._status.config(text="Finished")
-            if self._solver.result() != None:
-                self._demo.config(state=tkinter.NORMAL)
+            try:
+                if self._solver.result() != None:
+                    self._demo.config(state=tkinter.NORMAL)
+            except pushastar.IncompleteError:
+                self._status.config(text="Cancelled")
         else:
             self._status.config(text="Still solving")
             self.after(1000, self._periodic_update)
