@@ -4,7 +4,6 @@ Contains the structures to store our puzzles in.
 """
 
 from . import directions
-from plugins.pushpuzzle import directions
 
 class Puzzle:
     """Main class for storing our puzzles."""
