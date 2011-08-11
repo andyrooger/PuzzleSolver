@@ -32,7 +32,45 @@ def path_dist(state, a, b):
         return [(p, 1) for p in dirs if state.cleared_square(p) or p == b]
     distance = AStar(a, goal, heuristic, transitions).solve()
     return None if distance == None else len(distance)-1
+
+####
+#
+# Heuristic functions
+#
+####
+
+def matched_separation(separator, dist, state, boxprimary=True):
+    """
+    Use separator to find a sum of distance between matched boxes/targets.
     
+    One of targets or boxes is the primary set and each item from this set will be
+    matched against the other.
+    
+    """
+    
+    distance = (lambda a, b: dist(state, a, b))
+    
+    if boxprimary:
+        return separator(state.boxes, state.base.targets, distance)
+    else:
+        return separator(state.base.targets, state.boxes, distance)
+
+def blind_separation(primary, secondary, dist):
+    """
+    Get the sum of distances of primary items to their nearest secondary.
+    
+    We ignore the nearest targets of other boxes, so could use the same one twice.
+    
+    """
+    
+    return sum(min(dist(p, s) for s in secondary) for p in primary)
+
+####
+#
+# Solver functions
+#
+####
+
 def transitions(state):
     for box in state.boxes:
         for dir in directions.DIRECTIONS:
