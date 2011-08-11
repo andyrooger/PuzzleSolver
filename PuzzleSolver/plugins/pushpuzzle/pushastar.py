@@ -3,8 +3,34 @@ Uses AStar to solve a push puzzle.
 
 """
 
+import math
+
 from solver.utility.astar import AStar
 from plugins.pushpuzzle import directions
+    
+####
+#
+# Distance functions
+#
+####
+
+def manhattan_dist(state, a, b):
+    """Get distance from a to b, moving in a grid."""
+    return abs(a[0]-b[0]) + abs(a[1]-b[1])
+
+def direct_dist(state, a, b):
+    """Get distance from a to b, moving in a direct line."""
+    return math.sqrt(a*a + b*b)
+
+def path_dist(state, a, b):
+    """Get distance from a to b, moving through the given puzzle."""
+    goal = (lambda s: s == b)
+    heuristic = lambda s: manhattan_dist(s, b)
+    def transitions(s):
+        dirs = directions.adjacent(s).values()
+        return [(p, 1) for p in dirs if state.cleared_square(p)]
+    distance = AStar(a, goal, heuristic, transitions).solve()
+    return None if distance == None else len(distance)-1
     
 def transitions(state):
     for box in state.boxes:
