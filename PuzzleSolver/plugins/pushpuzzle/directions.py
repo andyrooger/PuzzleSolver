@@ -31,3 +31,17 @@ def adjacent(pos, direction=None):
         return (pos[0]+1, pos[1])
     else:
         raise ValueError("Not a direction: " + str(direction))
+
+def movement(a, b):
+    """Which direction was the movement in, if multiple then this could return any valid."""
+    
+    if b[1] < a[1]:
+        return "UP"
+    elif b[1] > a[1]:
+        return "DOWN"
+    elif b[0] < a[0]:
+        return "LEFT"
+    elif b[0] > a[0]:
+        return "RIGHT"
+    else:
+        return None

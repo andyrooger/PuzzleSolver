@@ -6,7 +6,8 @@ Uses AStar to solve a push puzzle.
 import math
 
 from solver.utility.astar import AStar
-from plugins.pushpuzzle import directions
+from . import directions
+from . import pathfinder
     
 ####
 #
@@ -28,7 +29,7 @@ def path_dist(state, a, b):
     heuristic = lambda s: manhattan_dist(s, b)
     def transitions(s):
         dirs = directions.adjacent(s).values()
-        return [(p, 1) for p in dirs if state.cleared_square(p)]
+        return [(p, 1) for p in dirs if state.cleared_square(p) or p == b]
     distance = AStar(a, goal, heuristic, transitions).solve()
     return None if distance == None else len(distance)-1
     
@@ -48,9 +49,32 @@ def solve(initial, heuristic=(lambda s: 0), solver=AStar, **kwargs):
     
     goal = (lambda state: state.goal())
 
-    return solver(
+    return recover_directions(solver(
         initial,
         goal,
         heuristic,
         transitions,
-        **kwargs).solve()
+        **kwargs).solve())
+
+def recover_directions(states):
+    """Given a set of states, return the directions needed to create the complete path."""
+    
+    dirs = []
+    
+    for current, to in zip(states, states[1:]):
+        box_from = current.boxes.difference(to.boxes)
+        box_to = to.boxes.difference(current.boxes)
+        assert len(box_from) == 1, "Too many boxes moved in one step."
+        assert len(box_to) == 1, "Too many boxes moved in one step."
+        
+        box_from = next(iter(box_from))
+        box_to = next(iter(box_to))
+        assert manhattan_dist(current, box_from, box_to) == 1, "Box moved too far in one step"
+        
+        dir = directions.movement(box_from, box_to)
+        player_push = directions.adjacent(box_from, directions.opposite(dir))
+        
+        dirs += pathfinder.find_path(current, player_push)
+        dirs.append(dir)
+        
+    return dirs
