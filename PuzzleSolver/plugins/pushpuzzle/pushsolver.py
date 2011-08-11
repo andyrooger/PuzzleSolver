@@ -7,6 +7,7 @@ import tkinter
 
 import solver.plugin
 import solver.state
+from solver.utility import process_exec
 
 from . import pushastar
 
@@ -23,8 +24,10 @@ class PushSolver(solver.plugin.Solver):
         """Start the push puzzle solver."""
         
         self._playframe.freeze(True)
-        self._solver = pushastar.PushAStar(self._playframe.get_puzzle())
-        self._solver.begin()
+        self._solver = process_exec.ProcessExecutor(
+            pushastar.solve,
+            self._playframe.get_puzzle().state())
+        self._solver.start()
         SolverStatusDialog(self._playframe, self._solver, self._finished)
     
     def stop(self):
@@ -35,8 +38,7 @@ class PushSolver(solver.plugin.Solver):
         should not be possible from the main window.
         """
         
-        if not self._solver.cancel():
-            return False # it's still running
+        self._solver.cancel()
         self._playframe.freeze(False)
         # Now let the dialog decide what to do with it
         return True
@@ -66,7 +68,7 @@ class SolverStatusDialog(tkinter.Toplevel):
         solver.state.solving.change(None) # should always work
         try:
             solution = self._solver.result()
-        except pushastar.IncompleteError:
+        except process_exec.IncompleteError:
             pass
         else:
             if solution != None:
@@ -83,12 +85,12 @@ class SolverStatusDialog(tkinter.Toplevel):
         """Update the dialog."""
         
         # Should be already solving or finished
-        if not self._solver.solving():
+        if not self._solver.working():
             self._status.config(text="Finished")
             try:
                 if self._solver.result() != None:
                     self._demo.config(state=tkinter.NORMAL)
-            except pushastar.IncompleteError:
+            except process_exec.IncompleteError:
                 self._status.config(text="Cancelled")
         else:
             self._status.config(text="Still solving")
