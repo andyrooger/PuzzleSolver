@@ -55,7 +55,7 @@ def matched_separation(separator, dist, state, boxprimary=True):
     else:
         return separator(state.base.targets, state.boxes, distance)
 
-def blind_separation(primary, secondary, dist):
+def blind_match(primary, secondary, dist):
     """
     Get the sum of distances of primary items to their nearest secondary.
     
@@ -64,6 +64,55 @@ def blind_separation(primary, secondary, dist):
     """
     
     return sum(min(dist(p, s) for s in secondary) for p in primary)
+
+def far_match(primary, secondary, dist):
+    """Match pairs of items starting with the farthest primary item from anywhere."""
+    
+    p_set = set(primary)
+    s_set = set(secondary)
+    
+    distances = {
+        (p, s): dist(p, s)
+        for p in p_set
+        for s in s_set
+    }
+    
+    total = 0
+    while p_set:
+        closest_s = {
+            p: min(s_set, key=(lambda s: distances[(p, s)]))
+            for p in p_set
+        }
+        paired_p = max(p_set, key=(lambda p: distances[(p, closest_s[p])]))
+        paired_s = closest_s[paired_p]
+        total += distances[(paired_p, paired_s)]
+        p_set.remove(paired_p)
+        s_set.remove(paired_s)
+    
+    return total
+    
+def close_match(primary, secondary, dist):
+    """Match pairs of items starting with the closest."""
+
+    p_set = set(primary)
+    s_set = set(secondary)
+    
+    distances = {
+        (p, s): dist(p, s)
+        for p in p_set
+        for s in s_set
+    }
+    
+    total = 0
+    while p_set and s_set:
+        closest = min(((p, s) for p in p_set for s in s_set),
+                      key=(lambda pair: distances[pair]))
+        total += distances[closest]
+        p_set.remove(closest[0])
+        s_set.remove(closest[1])
+
+    return total
+            
 
 ####
 #
