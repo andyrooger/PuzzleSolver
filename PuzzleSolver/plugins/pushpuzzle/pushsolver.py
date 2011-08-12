@@ -4,10 +4,11 @@ Solver for the push puzzle.
 """
 
 import tkinter
+import multiprocessing
 
 import solver.plugin
 import solver.state
-from solver.utility import process_exec, simpleframe, buttonselector
+from solver.utility import process_exec, simpleframe, buttonselector, astar
 
 from . import pushastar
 
@@ -131,8 +132,8 @@ class SolverConfig(tkinter.Toplevel):
         self._question.config(text=question)
         print(callback)
         selector = buttonselector.ButtonSelector(self._content, vertical=True, selected=callback)
-        for a in answers:
-            selector.add(a, answers[a])
+        for a, obj in answers:
+            selector.add(a, obj)
         self._content.set_content(selector)
         
     def finish(self, *vargs, **kwargs):
@@ -142,17 +143,49 @@ class SolverConfig(tkinter.Toplevel):
         self._done(*vargs, **kwargs)
         
     def _ask_initial(self):
+        def cb(usedefaults):
+            if usedefaults:
+                h = (lambda s: pushastar.matched_separation(
+                    pushastar.far_match, pushastar.manhattan_dist, s))
+                self.finish(h, pushastar.AStar)
+            else:
+                self._ask_solver()
         self.ask("Would you like to use solver defaults or manage this by your self?",
-                 {
-                  "Use Defaults": True,
-                  "Configure on my Own.": False
-                 },
-                 callback=self._configure_defaults)
+                 [
+                  ("Use Defaults", True),
+                  ("Configure on my Own.", False)
+                 ], callback=cb)
         
-    def _configure_defaults(self, usedefaults):
-        if usedefaults:
-            h = (lambda s: pushastar.matched_separation(
-                pushastar.far_match, pushastar.manhattan_dist, s))
-            self.finish(h, pushastar.AStar)
+    def _ask_solver(self):
+        def cb(solver):
+            kwargs = {"solver": solver}
+            if solver is astar.AStar:
+                self._ask_heuristic(kwargs)
+            else:
+                self._ask_processes(kwargs)
+            
+        self.ask("What type of solver do you want to use?",
+                 [
+                  ("Basic A*", astar.AStar),
+                  ("Parallel Symmetric A*", astar.SymmetricAStar),
+                  ("Parallel Served A*", astar.ServedAStar),
+                  ("Parallel Pulled A*", astar.PulledAStar)
+                 ], callback=cb)
+        
+    def _ask_processes(self, kwargs):
+        def cb(num):
+            kwargs["groupsize"] =  num
+            self._ask_heuristic(kwargs)
+        
+        proc_ans = [(str(x), x) for x in [1, 2, 5, 10, 20]]
+        try:
+            cpus = multiprocessing.cpu_count()
+        except NotImplementedError:
+            pass
         else:
-            self.finish() # We want to ask more questions
+            proc_ans.insert(0, ("One per Core (%s)" % cpus, cpus))
+        self.ask("How many processes do you want to run?",
+                 proc_ans, callback=cb)
+    
+    def _ask_heuristic(self, kwargs):
+        self.finish(**kwargs)
