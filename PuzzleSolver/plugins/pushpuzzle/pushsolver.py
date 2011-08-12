@@ -130,7 +130,6 @@ class SolverConfig(tkinter.Toplevel):
         """Ask a question."""
         
         self._question.config(text=question)
-        print(callback)
         selector = buttonselector.ButtonSelector(self._content, vertical=True, selected=callback)
         for a, obj in answers:
             selector.add(a, obj)
@@ -147,7 +146,7 @@ class SolverConfig(tkinter.Toplevel):
             if usedefaults:
                 h = (lambda s: pushastar.matched_separation(
                     pushastar.far_match, pushastar.manhattan_dist, s))
-                self.finish(h, pushastar.AStar)
+                self.finish(heuristic=h, solver=pushastar.AStar)
             else:
                 self._ask_solver()
         self.ask("Would you like to use solver defaults or manage this by your self?",
@@ -188,4 +187,37 @@ class SolverConfig(tkinter.Toplevel):
                  proc_ans, callback=cb)
     
     def _ask_heuristic(self, kwargs):
-        self.finish(**kwargs)
+        def cb(heuristic):
+            if heuristic is pushastar.shift_sum:
+                kwargs["heuristic"] = heuristic
+                self.finish(**kwargs)
+            else:
+                self._ask_dist(kwargs, heuristic)
+        self.ask("Which heuristic would you like to use?",
+                 [
+                  ("Blind Matching", pushastar.blind_match),
+                  ("Far Matching", pushastar.far_match),
+                  ("Close Matching", pushastar.close_match),
+                  ("Shift Sum", pushastar.shift_sum)
+                 ], callback=cb)
+        
+    def _ask_dist(self, kwargs, heuristic):
+        def cb(dist):
+            self._ask_setpriority(kwargs, heuristic, dist)
+        self.ask("Which distance function would you like to use?",
+                 [
+                  ("Manhattan", pushastar.manhattan_dist),
+                  ("Direct", pushastar.direct_dist),
+                  ("Actual Path", pushastar.path_dist)
+                 ], callback=cb)
+        
+    def _ask_setpriority(self, kwargs, heuristic, dist):
+        def cb(priority):
+            kwargs["heuristic"] = (lambda s:
+                pushastar.matched_separation(heuristic, dist, s, priority))
+            self.finish(**kwargs)
+        self.ask("Which set should be the primary set?",
+                 [
+                  ("Boxes", True),
+                  ("Targets", False)
+                 ], callback=cb)
