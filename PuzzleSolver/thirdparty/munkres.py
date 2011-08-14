@@ -316,8 +316,6 @@ class Munkres:
         self.marked = None
         self.path = None
 
-    make_cost_matrix = staticmethod(make_cost_matrix)
-
     def pad_matrix(self, matrix, pad_value=0):
         """
         Pad a possibly non-square matrix to make it square.

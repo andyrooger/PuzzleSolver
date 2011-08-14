@@ -198,6 +198,7 @@ class SolverConfig(tkinter.Toplevel):
                   ("Blind Matching", pushastar.blind_match),
                   ("Far Matching", pushastar.far_match),
                   ("Close Matching", pushastar.close_match),
+                  ("Hungarian Matching", pushastar.munkres_value),
                   ("Shift Sum", pushastar.shift_sum)
                  ], callback=cb)
         
