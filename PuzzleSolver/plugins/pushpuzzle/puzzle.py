@@ -115,6 +115,7 @@ class PuzzleState:
         self._record_accessibility()
         if freeze:
             self.boxes = frozenset(self.boxes)
+        self._hash_obj = (min(self.accessible) if self.accessible else None, self.boxes)
         self.finalised = True
 
     def valid(self):
@@ -213,7 +214,19 @@ class PuzzleState:
             p.boxes = self.boxes # still frozen
             if player in self.accessible:
                 p.accessible = self.accessible
+                p._hash_obj = self._hash_obj
                 p.finalised = True
             else:
                 p.finalise(freeze=False) # Don't need to freeze boxes
         return p
+
+    def __eq__(self, state):
+        if isinstance(state, PuzzleState):
+            assert self.finalised or state.finalised, "State was not finalised before comparison"
+            return self._hash_obj.__eq__(state._hash_obj)
+        else:
+            return super().__eq__(state)
+
+    def __hash__(self):
+        assert self.finalised, "State was not finalised before hashing"
+        return self._hash_obj.__hash__()

@@ -160,12 +160,14 @@ def solve(initial, heuristic=(lambda s: 0), solver=AStar, **kwargs):
     
     goal = (lambda state: state.goal())
 
-    return recover_directions(solver(
+    soln = solver(
         initial,
         goal,
         heuristic,
         transitions,
-        **kwargs).solve())
+        **kwargs).solve()
+    
+    return recover_directions(soln) if soln else None
 
 def recover_directions(states):
     """Given a set of states, return the directions needed to create the complete path."""
@@ -187,5 +189,5 @@ def recover_directions(states):
         
         dirs += pathfinder.find_path(current, player_push)
         dirs.append(dir)
-        
+    
     return dirs
