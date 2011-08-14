@@ -26,14 +26,15 @@ def direct_dist(state, a, b):
     return math.sqrt(a*a + b*b)
 
 def path_dist(state, a, b):
-    """Get distance from a to b, moving through the given puzzle."""
+    """Get distance from a to b, moving through the given puzzle (ignoring boxes)."""
     goal = (lambda s: s == b)
-    heuristic = lambda s: manhattan_dist(s, b)
+    heuristic = lambda s: manhattan_dist(state, s, b)
     def transitions(s):
         dirs = directions.adjacent(s).values()
-        return [(p, 1) for p in dirs if state.cleared_square(p) or p == b]
+        return [(p, 1) for p in dirs if p not in state.base.walls]
     distance = AStar(a, goal, heuristic, transitions).solve()
-    return None if distance == None else len(distance)-1
+    return (state.base.height * state.base.width # Maximum path possible
+            if distance == None else len(distance)-1)
 
 ####
 #
