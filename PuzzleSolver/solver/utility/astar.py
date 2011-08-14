@@ -129,6 +129,7 @@ def StorageManager(Storage):
             self._lock = multiprocessing.Lock() # Every client locks, then send and wait for receive if necessary, then unlock
             self._storage = None
             self._manager = multiprocessing.Process(target=self._server)
+            self._manager.daemon = True
             self._manager.start() # Runs independently and closes on finish()
 
         def _server(self):
@@ -397,6 +398,7 @@ class SymmetricAStar(AStar):
             for _ in range(self._groupsize)
         ]
         for proc in processes:
+            proc.daemon = True
             proc.start()
         while True:
             working = self._distribute_work(server_pipe)
@@ -471,6 +473,7 @@ class ServedAStar(AStar):
                 for _ in range(self._groupsize)
             ]
             for proc in processes:
+                proc.daemon = True
                 proc.start()
             while True:
                 waiting = self._distribute_work(server_pipe, waiting)
@@ -528,6 +531,7 @@ class PulledAStar(AStar):
             for _ in range(self._groupsize)
         ]
         for proc in processes:
+            proc.daemon = True
             proc.start()
 
         for proc in processes:
