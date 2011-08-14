@@ -7,6 +7,7 @@ import tkinter
 from tkinter import tix
 import multiprocessing
 import queue
+import time
 
 import solver.plugin
 import solver.state
@@ -67,10 +68,12 @@ class SolverStatusDialog(tkinter.Toplevel):
         self._status.grid(row=0, column=0, columnspan=2, sticky="nsew")
         self._progress = tix.Meter(self, text="Not started")
         self._progress.grid(row=1, column=0, columnspan=2, sticky="nsew")
+        self._time = tkinter.Label(self, text="Not started")
+        self._time.grid(row=2, column=0, columnspan=2, sticky="nsew")
         
         self._demo = tkinter.Button(self, text="Demonstrate", command=self.demo, state=tkinter.DISABLED)
-        self._demo.grid(row=2, column=0)
-        tkinter.Button(self, text="Cancel", command=self.cancel).grid(row=2, column=1)
+        self._demo.grid(row=3, column=0)
+        tkinter.Button(self, text="Cancel", command=self.cancel).grid(row=3, column=1)
         self._periodic_update()
         
     def demo(self):
@@ -107,12 +110,20 @@ class SolverStatusDialog(tkinter.Toplevel):
         else:
             self._update_pipe_stats()
             self.after(500, self._periodic_update)
+        self._update_time()
             
     def _update_pipe_stats(self):
         cnt, cur, total = self._solver.status()
-        self._status.config(text=("Processed %s states." % cnt))
+        self._status.config(text=("Processed %i states." % cnt))
         prop = 0 if total == 0 else cur/total
-        self._progress.config(text="At %s of %s Expected..." % (cur, total), value=prop)
+        self._progress.config(text="At %i of %i Expected..." % (cur, total), value=prop)
+    
+    def _update_time(self):
+        t = self._solver.runtime()
+        if self._solver.working():
+            self._time.config(text="Time elapsed: %.3fs" % t)
+        else:
+            self._time.config(text="Completed in %.3fs" % t)
 
 class SolverConfig(tkinter.Toplevel):
     """Deals with configuration for the solver, choosing solver classes and heuristics."""
@@ -157,7 +168,7 @@ class SolverConfig(tkinter.Toplevel):
             if usedefaults:
                 h = (lambda s: pushastar.matched_separation(
                     pushastar.far_match, pushastar.manhattan_dist, s))
-                self.finish(heuristic=h, solver=pushastar.AStar)
+                self.finish(heuristic=h, solver=astar.ServedAStar)
             else:
                 self._ask_solver()
         self.ask("Would you like to use solver defaults or manage this by your self?",
@@ -239,6 +250,8 @@ class PushProcess(process_exec.ProcessExecutor):
     
     def __init__(self, initial, *vargs, **kwargs):
         self._reports = multiprocessing.Queue() # For status updates
+        self._timer = None
+        self._worker = self._timed(self._worker)
         process_exec.ProcessExecutor.__init__(self,
             pushastar.solve,
             initial,
@@ -261,3 +274,22 @@ class PushProcess(process_exec.ProcessExecutor):
             self._current_total = msg[1]
         
         return (self._store_count, self._current_cost, self._current_total)
+    
+    def runtime(self):
+        if self._timer == None:
+            return 0
+        else:
+            t = self._timer.value
+            if t >= 0:
+                return time.time() - t
+            else:
+                return -t
+    
+    def _timed(self, f):
+        self._timer = multiprocessing.Value('d', 0)
+        timer = self._timer
+        def new_f(*vargs, **kwargs):
+            timer.value = time.time()
+            f(*vargs, **kwargs)
+            timer.value -= time.time() # negative to say done
+        return new_f
