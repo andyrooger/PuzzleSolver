@@ -5,6 +5,8 @@ Uses AStar to solve a push puzzle.
 
 import math
 
+from thirdparty import munkres
+
 from solver.utility.astar import AStar
 from . import directions
 from . import pathfinder
@@ -111,6 +113,16 @@ def close_match(primary, secondary, dist):
         s_set.remove(closest[1])
 
     return total
+
+_munkres = munkres.Munkres()
+
+def munkres_value(primary, secondary, dist):
+    """Get the distance of the best matching between boxes and targets using the munkres algorithm."""
+    
+    global _munkres
+    
+    distances = [[dist(p, s) for p in primary] for s in secondary]
+    return sum(distances[p][s] for p,s in _munkres.compute(distances))
 
 def shift_sum(state):
     """Align targets and boxes in a single dimensions and sum the distances in these dimensions."""
