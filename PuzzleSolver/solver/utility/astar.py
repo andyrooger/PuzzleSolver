@@ -5,6 +5,7 @@ Helpful search algorithms for use by plugins.
 
 import multiprocessing
 import queue
+import abc
 
 from . import sync
 
@@ -14,7 +15,19 @@ from . import sync
 #
 ###############################################################
 
-class UsefulStorage:
+class AbstractStorage(metaclass=abc.ABCMeta):
+    """ABC for storage so we know what we have to implement!"""
+    
+    @abc.abstractmethod
+    def record(self, state, parent): raise NotImplementedError
+    @abc.abstractmethod
+    def record_all(self, states, parent): raise NotImplementedError
+    @abc.abstractmethod
+    def take(self): raise NotImplementedError
+    @abc.abstractmethod
+    def parent(self, state): raise NotImplementedError
+
+class UsefulStorage(AbstractStorage):
     """Saves implementing certain functions in storage classes."""
 
     def record(self, state, parent):
@@ -24,6 +37,11 @@ class UsefulStorage:
     def record_all(self, states, parent):
         for s in states:
             self.record(s, parent)
+
+    @abc.abstractmethod
+    def _add_parent(self, state, parent): raise NotImplementedError
+    @abc.abstractmethod
+    def _add_state(self, item): raise NotImplementedError
 
 class LayeredAStarStorage(UsefulStorage):
     """Orders states using various levels of dicts."""
@@ -103,7 +121,7 @@ class BasicAStarStorage(UsefulStorage):
 def StorageManager(Storage):
     """Create a class that spawns a new process to control the class and acts as a proxy anywhere else."""
 
-    class StorageManager:
+    class StorageManager(AbstractStorage):
         def __init__(self):
             #multiprocessing.current_process.name() # The one to delete with
             # create server process, add and take become clients
