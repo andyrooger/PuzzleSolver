@@ -272,9 +272,10 @@ def ReportingStorageManager(StorageManager, q):
     """Transforms a normal storage manager to report information about the current situation."""
     
     class ReportingStorageManager(StorageManager):
-        def record(self, state, parent):
-            super().record(state, parent)
+        def take(self):
+            state = super().take() # Exceptions propagated
             q.put((state[1], state[2])) # cost, expected
+            return state
     
     return ReportingStorageManager
 

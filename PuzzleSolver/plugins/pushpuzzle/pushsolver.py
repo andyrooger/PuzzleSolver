@@ -4,6 +4,7 @@ Solver for the push puzzle.
 """
 
 import tkinter
+from tkinter import tix
 import multiprocessing
 import queue
 
@@ -68,9 +69,12 @@ class SolverStatusDialog(tkinter.Toplevel):
         
         self._status = tkinter.Label(self, text="Solving...")
         self._status.grid(row=0, column=0, columnspan=2, sticky="nsew")
+        self._progress = tix.Meter(self, text="Not started")
+        self._progress.grid(row=1, column=0, columnspan=2, sticky="nsew")
+        
         self._demo = tkinter.Button(self, text="Demonstrate", command=self.demo, state=tkinter.DISABLED)
-        self._demo.grid(row=1, column=0)
-        tkinter.Button(self, text="Cancel", command=self.cancel).grid(row=1, column=1)
+        self._demo.grid(row=2, column=0)
+        tkinter.Button(self, text="Cancel", command=self.cancel).grid(row=2, column=1)
         self._periodic_update()
         
     def demo(self):
@@ -98,27 +102,28 @@ class SolverStatusDialog(tkinter.Toplevel):
         # Should be already solving or finished
         if not self._solver.working():
             self._status.config(text="Finished")
+            self._progress.config(text="Done", value=1)
             try:
                 if self._solver.result() != None:
                     self._demo.config(state=tkinter.NORMAL)
             except process_exec.IncompleteError:
                 self._status.config(text="Something went horribly wrong!")
         else:
-            msg = None
-            while True:
-                try:
-                    msg = self._stat_q.get(False)
-                except queue.Empty:
-                    break
-                else:
-                    self._store_count += 1
-            if msg != None:
-                self._status.config(text=
-                    ("Generated %s states.\n"
-                     "Current moves are %s\n"
-                     "Expected total is %s") %
-                     (self._store_count, msg[0], msg[1]))
+            self._update_pipe_stats()
             self.after(500, self._periodic_update)
+            
+    def _update_pipe_stats(self):
+        msg = None
+        while True:
+            try:
+                msg = self._stat_q.get(False)
+            except queue.Empty:
+                break
+            else:
+                self._store_count += 1
+        if msg != None:
+            self._status.config(text=("Processed %s states." % self._store_count))
+            self._progress.config(text="At %s of %s Expected..." % msg, value=msg[0]/msg[1])
 
 class SolverConfig(tkinter.Toplevel):
     """Deals with configuration for the solver, choosing solver classes and heuristics."""
