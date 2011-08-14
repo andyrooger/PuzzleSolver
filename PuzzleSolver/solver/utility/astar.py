@@ -313,8 +313,8 @@ class AStar:
 class SymmetricAStar(AStar):
     """Like other parallel AStar implementations, but all parallel operations have to finish before the next group begin."""
 
-    def __init__(self, state, goal, heuristic, expander, groupsize=2, Storage=BestStorage):
-        AStar.__init__(self, state, goal, heuristic, expander, Storage)
+    def __init__(self, *vargs, groupsize=2, **kwargs):
+        AStar.__init__(self, *vargs, **kwargs)
         self._groupsize = groupsize
 
     def _step_worker(self, pipe, rlock, wlock):
@@ -382,8 +382,8 @@ class SymmetricAStar(AStar):
 class ServedAStar(AStar):
     """Like AStar but the procesing set becomes a server that serves a new item to processes each time one completes."""
 
-    def __init__(self, state, goal, heuristic, expander, groupsize=2, Storage=BestStorage):
-        AStar.__init__(self, state, goal, heuristic, expander, Storage)
+    def __init__(self, *vargs, groupsize=2, **kwargs):
+        AStar.__init__(self, *vargs, **kwargs)
         self._groupsize = groupsize
 
     def _step_worker(self, pipe, rlock, wlock):
@@ -462,8 +462,10 @@ class ServedAStar(AStar):
 class PulledAStar(AStar):
     """Like ServedAStar but processes pull when available rather than being served."""
 
-    def __init__(self, state, goal, heuristic, expander, groupsize=2, Storage=BestStorage):
-        AStar.__init__(self, state, goal, heuristic, expander, PreparedStorageManager(Storage))
+    def __init__(self, *vargs, groupsize=2, **kwargs):
+        kwargs["Storage"] = kwargs.get("Storage", BestStorage)
+        kwargs["Storage"] = PreparedStorageManager(kwargs["Storage"])
+        AStar.__init__(self, *vargs, **kwargs)
         self._groupsize = groupsize
 
     def _step_worker(self, q, idle):
