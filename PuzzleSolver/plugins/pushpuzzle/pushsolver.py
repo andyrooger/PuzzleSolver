@@ -29,13 +29,11 @@ class PushSolver(solver.plugin.Solver):
         self._playframe.freeze(True)
         
         def make_solver(*vargs, **kwargs):
-            reports = multiprocessing.Queue()
-            self._solver = process_exec.ProcessExecutor(
-                pushastar.solve,
+            self._solver = PushProcess(
                 self._playframe.get_puzzle().state(),
-                *vargs, reporting=reports, **kwargs)
+                *vargs, **kwargs)
             self._solver.start()
-            SolverStatusDialog(self._playframe, self._solver, reports, self._finished)
+            SolverStatusDialog(self._playframe, self._solver, self._finished)
             
         SolverConfig(self._playframe, make_solver)
     
@@ -55,12 +53,10 @@ class PushSolver(solver.plugin.Solver):
 class SolverStatusDialog(tkinter.Toplevel):
     """Record and periodically update information about the status of the solver."""
     
-    def __init__(self, master, solver, stat_q, finished):
+    def __init__(self, master, solver, finished):
         tkinter.Toplevel.__init__(self, master)
         self._solver = solver
         self._finished = finished
-        self._stat_q = stat_q
-        self._store_count = 0
         
         self.title("Solving...")
         self.grab_set()
@@ -113,17 +109,10 @@ class SolverStatusDialog(tkinter.Toplevel):
             self.after(500, self._periodic_update)
             
     def _update_pipe_stats(self):
-        msg = None
-        while True:
-            try:
-                msg = self._stat_q.get(False)
-            except queue.Empty:
-                break
-            else:
-                self._store_count += 1
-        if msg != None:
-            self._status.config(text=("Processed %s states." % self._store_count))
-            self._progress.config(text="At %s of %s Expected..." % msg, value=msg[0]/msg[1])
+        cnt, cur, total = self._solver.status()
+        self._status.config(text=("Processed %s states." % cnt))
+        prop = 0 if total == 0 else cur/total
+        self._progress.config(text="At %s of %s Expected..." % (cur, total), value=prop)
 
 class SolverConfig(tkinter.Toplevel):
     """Deals with configuration for the solver, choosing solver classes and heuristics."""
@@ -244,3 +233,31 @@ class SolverConfig(tkinter.Toplevel):
                   ("Boxes", True),
                   ("Targets", False)
                  ], callback=cb)
+        
+class PushProcess(process_exec.ProcessExecutor):
+    """Process executor for solving a push puzzle."""
+    
+    def __init__(self, initial, *vargs, **kwargs):
+        self._reports = multiprocessing.Queue() # For status updates
+        process_exec.ProcessExecutor.__init__(self,
+            pushastar.solve,
+            initial,
+            *vargs, reporting=self._reports, **kwargs)
+        self._store_count = 0
+        self._current_cost = 0
+        self._current_total = 0
+
+    def status(self):
+        msg = None
+        try:
+            while True:
+                msg = self._reports.get(False)
+                self._store_count += 1 # If failed we already left
+        except queue.Empty:
+            pass
+        
+        if msg != None:
+            self._current_cost = msg[0]
+            self._current_total = msg[1]
+        
+        return (self._store_count, self._current_cost, self._current_total)
