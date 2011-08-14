@@ -103,7 +103,9 @@ class SolverStatusDialog(tkinter.Toplevel):
             self._status.config(text="Finished")
             self._progress.config(text="Done", value=1)
             try:
-                if self._solver.result() != None:
+                if self._solver.result() == None:
+                    self._status.config(text="No solution found")
+                else:
                     self._demo.config(state=tkinter.NORMAL)
             except process_exec.IncompleteError:
                 self._status.config(text="Something went horribly wrong!")
