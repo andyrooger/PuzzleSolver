@@ -249,6 +249,16 @@ def PreparedStorageManager(Storage):
 
     return PreparedStorageManager
 
+def ReportingStorageManager(StorageManager, q):
+    """Transforms a normal storage manager to report information about the current situation."""
+    
+    class ReportingStorageManager(StorageManager):
+        def record(self, state, parent):
+            super().record(state, parent)
+            q.put((state[1], state[2])) # cost, expected
+    
+    return ReportingStorageManager
+
 BestStorage=UniqueLayeredAStarStorage
 
 ###############################################################
@@ -260,11 +270,13 @@ BestStorage=UniqueLayeredAStarStorage
 class AStar:
     """Provides an implementation for the A* algorithm."""
 
-    def __init__(self, state, goal, heuristic, expander, Storage=BestStorage):
+    def __init__(self, state, goal, heuristic, expander, Storage=BestStorage, reporting=None):
         self._goal = goal
         self._heuristic = heuristic
         self._expander = expander
-        self._storage = Storage() # Collects and returns full_state
+        # Collects and returns full_state
+        self._storage = (Storage if reporting == None
+                         else ReportingStorageManager(Storage, reporting))()
         self._storage.record((state, 0, heuristic(state)), None)
 
     def generate_path(self, state):
