@@ -5,6 +5,7 @@ Solver for the push puzzle.
 
 import tkinter
 import multiprocessing
+import queue
 
 import solver.plugin
 import solver.state
@@ -27,12 +28,13 @@ class PushSolver(solver.plugin.Solver):
         self._playframe.freeze(True)
         
         def make_solver(*vargs, **kwargs):
+            reports = multiprocessing.Queue()
             self._solver = process_exec.ProcessExecutor(
                 pushastar.solve,
                 self._playframe.get_puzzle().state(),
-                *vargs, **kwargs)
+                *vargs, reporting=reports, **kwargs)
             self._solver.start()
-            SolverStatusDialog(self._playframe, self._solver, self._finished)
+            SolverStatusDialog(self._playframe, self._solver, reports, self._finished)
             
         SolverConfig(self._playframe, make_solver)
     
@@ -52,17 +54,19 @@ class PushSolver(solver.plugin.Solver):
 class SolverStatusDialog(tkinter.Toplevel):
     """Record and periodically update information about the status of the solver."""
     
-    def __init__(self, master, solver, finished):
+    def __init__(self, master, solver, stat_q, finished):
         tkinter.Toplevel.__init__(self, master)
         self._solver = solver
         self._finished = finished
+        self._stat_q = stat_q
+        self._store_count = 0
         
         self.title("Solving...")
         self.grab_set()
         self.transient(master)
         self.protocol("WM_DELETE_WINDOW", self.cancel)
         
-        self._status = tkinter.Label(self, text="Progress")
+        self._status = tkinter.Label(self, text="Solving...")
         self._status.grid(row=0, column=0, columnspan=2, sticky="nsew")
         self._demo = tkinter.Button(self, text="Demonstrate", command=self.demo, state=tkinter.DISABLED)
         self._demo.grid(row=1, column=0)
@@ -100,8 +104,21 @@ class SolverStatusDialog(tkinter.Toplevel):
             except process_exec.IncompleteError:
                 self._status.config(text="Something went horribly wrong!")
         else:
-            self._status.config(text="Still solving")
-            self.after(1000, self._periodic_update)
+            msg = None
+            while True:
+                try:
+                    msg = self._stat_q.get(False)
+                except queue.Empty:
+                    break
+                else:
+                    self._store_count += 1
+            if msg != None:
+                self._status.config(text=
+                    ("Generated %s states.\n"
+                     "Current moves are %s\n"
+                     "Expected total is %s") %
+                     (self._store_count, msg[0], msg[1]))
+            self.after(500, self._periodic_update)
 
 class SolverConfig(tkinter.Toplevel):
     """Deals with configuration for the solver, choosing solver classes and heuristics."""
