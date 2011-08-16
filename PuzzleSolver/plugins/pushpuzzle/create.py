@@ -105,9 +105,21 @@ class PuzzleSetup(tkinter.Frame):
         tkinter.Button(centred, text="Create", command=self._create).grid(
             row=3, column=0, columnspan=2)
 
+        # Separator
+        tkinter.Frame(centred, height=2, bd=1, relief=tkinter.SUNKEN).grid(
+            row=4, column=0, columnspan=2, padx=5, pady=15, sticky="ew")
+
+        tkinter.Button(centred, text="Convert a Plain Puzzle File", command=self._convert).grid(
+            row=5, column=0, columnspan=2, pady=5)
+
         centred.grid()
 
     def _create(self):
+        """Create a puzzle based on dimensions."""
+        
         p = Puzzle(self._rows.get(), self._columns.get())
         p.initial().finalise()
         self._callback(p)
+
+    def _convert(self):
+        """Load old-style puzzle file."""
