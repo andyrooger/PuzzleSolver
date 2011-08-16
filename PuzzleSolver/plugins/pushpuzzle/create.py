@@ -4,11 +4,13 @@ View for Push Puzzle creation.
 """
 
 import tkinter
+from tkinter import messagebox
 import os
 
 import solver.plugin
 from solver.utility.simpleframe import SimpleFrame
 
+from . import convert
 from . puzzleeditor import PuzzleEditor
 from . puzzle import Puzzle
 
@@ -127,3 +129,15 @@ class PuzzleSetup(tkinter.Frame):
 
     def _convert(self):
         """Load old-style puzzle file."""
+        
+        filename = convert.choose_oldfile(self)
+        if not filename:
+            return # cancelled
+
+        try:
+            with open(filename) as file:
+                intermediate = convert.from_file(file)
+        except IOError:
+            messagebox.showerror("Whoops", "The file could not be read.")
+
+        self._callback(convert.to_puzzle(intermediate))
