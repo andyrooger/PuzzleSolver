@@ -33,8 +33,7 @@ def path_dist(state, a, b):
         dirs = directions.adjacent(s).values()
         return [(p, 1) for p in dirs if p not in state.base.walls]
     distance = AStar(a, goal, heuristic, transitions).solve()
-    return (state.base.height * state.base.width # Maximum path possible
-            if distance == None else len(distance)-1)
+    return (None if distance == None else len(distance)-1)
 
 ####
 #

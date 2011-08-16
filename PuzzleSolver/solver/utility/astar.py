@@ -62,6 +62,9 @@ class LayeredAStarStorage(UsefulStorage):
 
     def _add_state(self, item):
         _, cost, expected = item # split parts
+        
+        if expected == None:
+            return # Don't add terminal states to processing set
 
         if expected not in self._open: # expected cost level
             self._open[expected] = {}
@@ -316,7 +319,8 @@ class AStar:
         if self._goal(s):
             return s # Got answer
         else:
-            return [(state, cost+c, cost+c+self._heuristic(state)) for state, c in self._expander(s)]
+            full_states = ((state, cost+c, self._heuristic(state)) for state, c in self._expander(s))
+            return [ns if ns[2] == None else (ns[0], ns[1], ns[1]+ns[2]) for ns in full_states]
 
     def single_step(self):
         """Take a single state from the set if possible and expand or return the answer."""
