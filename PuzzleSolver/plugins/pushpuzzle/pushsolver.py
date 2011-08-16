@@ -169,8 +169,12 @@ class SolverConfig(tkinter.Toplevel):
         def cb(usedefaults):
             if usedefaults:
                 h = (lambda s: pushastar.matched_separation(
-                    pushastar.far_match, pushastar.manhattan_dist, s))
-                self.finish(heuristic=h, solver=astar.ServedAStar)
+                    pushastar.munkres_value, pushastar.path_dist, s))
+                try:
+                    cpus = multiprocessing.cpu_count()
+                except NotImplementedError:
+                    cpus = 2
+                self.finish(heuristic=h, solver=astar.ServedAStar, groupsize=cpus)
             else:
                 self._ask_solver()
         self.ask("Would you like to use solver defaults or manage this by your self?",
