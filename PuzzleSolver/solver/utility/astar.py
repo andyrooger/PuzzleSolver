@@ -551,3 +551,27 @@ class PulledAStar(AStar):
         self._storage.finish() # kill manager process
 
         return None if answer == None else self.generate_path(answer)
+
+###############################################################
+#
+# Transition extensions
+#
+###############################################################
+
+class TransitionAStar:
+    """Use the AStar class Solver to solve a problem, recording transitions."""
+    
+    def __init__(self, Solver, state, goal, heuristic, expander, **kwargs):
+        """Solver is AStar or similar, expander is as before but centre item is transition."""
+        
+        new_state = (state, None)
+        new_goal = (lambda state: goal(state[0]))
+        new_heuristic = (lambda state: heuristic(state[0]))
+        new_expander = (lambda state: [(s[:2], s[2]) for s in expander(state[0])])
+        self._solve = Solver(new_state, new_goal, new_heuristic, new_expander, **kwargs)
+    
+    def solve(self):
+        states = self._solve.solve()
+        if states == None:
+            return None
+        return [s[1] for s in states if s[1] != None]
