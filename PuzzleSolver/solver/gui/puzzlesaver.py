@@ -55,6 +55,7 @@ class PuzzleSaver:
             messagebox.showinfo("Whoops", "Sorry, this puzzle is not saveable.")
             return False
         filename = filedialog.asksaveasfilename(
+            initialdir = self._view.get_directory() or ".",
             defaultextension = ext,
             filetypes = [(solver.state.puzzletype.value().name() + " file", ext)],
             parent = master)
@@ -82,6 +83,7 @@ class PuzzleSaver:
             messagebox.showinfo("Whoops", "Sorry, this puzzle type is not loadable.")
             return False
         filename = filedialog.askopenfilename(
+            initialdir = self._view.get_directory() or ".",
             defaultextension = ext,
             filetypes = [(solver.state.puzzletype.value().name() + " file", ext)],
             parent = master)

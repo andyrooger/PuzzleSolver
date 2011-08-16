@@ -21,6 +21,7 @@ class UnknownView(solver.plugin.PuzzleView):
     def can_solve(self): return False
     def get_solver(self): return None
     def get_extension(self): return None
+    def get_directory(self): return None
     def get_puzzle(self): return None
     def changed(self): return False
     def saved(self): pass

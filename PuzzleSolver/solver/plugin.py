@@ -62,6 +62,10 @@ class PuzzleView(metaclass=abc.ABCMeta):
         """Get either the file extension used to save the puzzles below, or None"""
 
     @abc.abstractmethod
+    def get_directory(self):
+        """Get the most sensible directory to use when loading and saving."""
+
+    @abc.abstractmethod
     def get_puzzle(self):
         """Get either the puzzle object if it can be saved, or None."""
 
@@ -132,6 +136,7 @@ class DummyView(PuzzleView):
     def can_solve(self): return False
     def get_solver(self): return None
     def get_extension(self): return None
+    def get_directory(self): return None
     def get_puzzle(self): return self._puzzle
     def changed(self): return False
     def saved(self): pass

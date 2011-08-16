@@ -4,6 +4,7 @@ View for Push Puzzle playing.
 """
 
 import tkinter
+import os
 
 import solver.plugin
 from solver.utility.simpleframe import SimpleFrame
@@ -31,6 +32,11 @@ class PlayView(solver.plugin.PuzzleView):
 
     def get_extension(self):
         return ".spp"
+    
+    
+    def get_directory(self):
+        file = os.path.dirname(__file__)
+        return os.path.join(file, "resources", "examples")
 
     def get_puzzle(self):
         return self._frame.get_puzzle()

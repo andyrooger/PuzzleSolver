@@ -4,6 +4,7 @@ View for Push Puzzle creation.
 """
 
 import tkinter
+import os
 
 import solver.plugin
 from solver.utility.simpleframe import SimpleFrame
@@ -26,6 +27,9 @@ class CreateView(solver.plugin.PuzzleView):
     def can_solve(self): return False
     def get_solver(self): return None
     def get_extension(self): return ".spp"
+    def get_directory(self):
+        file = os.path.dirname(__file__)
+        return os.path.join(file, "resources", "examples")
 
     def get_puzzle(self): return self._frame.get_puzzle()
     def changed(self): return self._frame.changed()

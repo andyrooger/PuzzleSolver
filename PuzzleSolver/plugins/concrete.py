@@ -86,6 +86,8 @@ class ConcreteView(solver.plugin.PuzzleView):
     def get_extension(self):
         """Get either the file extension used to save the puzzles below, or None."""
         return ".con"
+    
+    def get_directory(self): return None
 
     def get_puzzle(self):
         """Get either the puzzle object if it can be saved, or None."""
