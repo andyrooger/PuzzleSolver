@@ -222,10 +222,17 @@ class PuzzleState:
 
     def __eq__(self, state):
         if isinstance(state, PuzzleState):
-            assert self.finalised or state.finalised, "State was not finalised before comparison"
+            assert self.finalised and state.finalised, "State was not finalised before comparison"
             return self._hash_obj.__eq__(state._hash_obj)
         else:
             return super().__eq__(state)
+        
+    def __ne__(self, state):
+        if isinstance(state, PuzzleState):
+            assert self.finalised, "State was not finalised before comparison."
+            return self._hash_obj.__ne__(state._hash_obj)
+        else:
+            return super().__ne__(state)
 
     def __hash__(self):
         assert self.finalised, "State was not finalised before hashing"
