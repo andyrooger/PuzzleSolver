@@ -9,7 +9,7 @@ from thirdparty import munkres
 
 from solver.utility.astar import AStar
 from . import directions
-from . import pathfinder
+from . import navigation
     
 ####
 #
@@ -186,7 +186,7 @@ def recover_directions(states):
         dir = directions.movement(box_from, box_to)
         player_push = directions.adjacent(box_from, directions.opposite(dir))
         
-        dirs += pathfinder.find_path(current, player_push)
+        dirs += navigation.player_path(current, player_push)
         dirs.append(dir)
     
     return dirs

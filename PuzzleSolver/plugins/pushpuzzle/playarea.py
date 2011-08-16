@@ -11,7 +11,7 @@ from solver.utility.scrollable_window import ScrollableWindow
 
 from . import style
 from . puzzle import Puzzle
-from . import pathfinder
+from . import navigation
 from . import directions
 
 _KEYCODES = {111: "UP", 116: "DOWN", 113: "LEFT", 114: "RIGHT"}
@@ -102,7 +102,7 @@ class PlayArea(ScrollableWindow):
 
         # Try long path find, will be None if not accessible
         # Don't worry about blocking, should be fast and we don't want the user to interact in between
-        path = pathfinder.find_path(self._puzzle.state(), pos)
+        path = navigation.player_path(self._puzzle.state(), pos)
         self.automove(path or [])
 
     def _keypress(self, evt):
