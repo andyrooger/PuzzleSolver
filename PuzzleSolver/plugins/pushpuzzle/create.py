@@ -44,11 +44,9 @@ class CreateFrame(SimpleFrame):
         return isinstance(self.content, PuzzleEditor)
 
     def clean(self):
-        def puzzle_create(r, c):
-            p = Puzzle(r, c)
-            p.initial().finalise()
+        def show_editor(p):
             self.set_content(PuzzleEditor(self, p))
-        self.set_content(DimensionChooser(self, puzzle_create))
+        self.set_content(PuzzleSetup(self, show_editor))
 
     def load(self, puzzle):
         try:
@@ -75,7 +73,7 @@ class CreateFrame(SimpleFrame):
         else:
             return False
 
-class DimensionChooser(tkinter.Frame):
+class PuzzleSetup(tkinter.Frame):
     def __init__(self, master, callback=(lambda r, c: None)):
         tkinter.Frame.__init__(self, master)
         self._callback = callback
@@ -104,10 +102,12 @@ class DimensionChooser(tkinter.Frame):
         tkinter.Entry(centred, textvariable=self._columns, width=2).grid(
             sticky="sew", row=2, column=1)
 
-        tkinter.Button(centred, text="Create", command=self._click).grid(
+        tkinter.Button(centred, text="Create", command=self._create).grid(
             row=3, column=0, columnspan=2)
 
         centred.grid()
 
-    def _click(self):
-        self._callback(self._rows.get(), self._columns.get())
+    def _create(self):
+        p = Puzzle(self._rows.get(), self._columns.get())
+        p.initial().finalise()
+        self._callback(p)
