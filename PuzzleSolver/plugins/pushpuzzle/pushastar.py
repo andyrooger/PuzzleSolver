@@ -3,37 +3,13 @@ Uses AStar to solve a push puzzle.
 
 """
 
-import math
+import inspect
 
 from thirdparty import munkres
 
 from solver.utility.astar import AStar
 from . import directions
 from . import navigation
-    
-####
-#
-# Distance functions
-#
-####
-
-def manhattan_dist(state, a, b):
-    """Get distance from a to b, moving in a grid."""
-    return abs(a[0]-b[0]) + abs(a[1]-b[1])
-
-def direct_dist(state, a, b):
-    """Get distance from a to b, moving in a direct line."""
-    return math.sqrt(a*a + b*b)
-
-def path_dist(state, a, b):
-    """Get distance from a to b, moving through the given puzzle (ignoring boxes)."""
-    goal = (lambda s: s == b)
-    heuristic = lambda s: manhattan_dist(state, s, b)
-    def transitions(s):
-        dirs = directions.adjacent(s).values()
-        return [(p, 1) for p in dirs if p not in state.base.walls]
-    distance = AStar(a, goal, heuristic, transitions).solve()
-    return (None if distance == None else len(distance)-1)
 
 ####
 #
@@ -41,21 +17,31 @@ def path_dist(state, a, b):
 #
 ####
 
-def matched_separation(separator, dist, state, boxprimary=True):
+def matched_separation(separator, dist, boxprimary=True):
     """
-    Use separator to find a sum of distance between matched boxes/targets.
+    Get a function that uses separator to find a sum of distance between matched
+    boxes/targets.
     
     One of targets or boxes is the primary set and each item from this set will be
-    matched against the other.
+    matched against the other. Distance can take or not take state.
     
     """
     
-    distance = (lambda a, b: dist(state, a, b))
+    convert = len(inspect.getargspec(dist).args) > 2
     
-    if boxprimary:
-        return separator(state.boxes, state.base.targets, distance)
+    # Avoid as much comparison as we can 
+    if not convert:
+        if boxprimary:
+            return lambda state: separator(state.boxes, state.base.targets, dist)
+        else:
+            return lambda state: separator(state.base.targets, state.boxes, dist)
     else:
-        return separator(state.base.targets, state.boxes, distance)
+        if boxprimary:
+            return lambda state: separator(state.boxes, state.base.targets,
+                                           lambda a, b: dist(a, b, state))
+        else:
+            return lambda state: separator(state.base.targets, state.boxes,
+                                           lambda a, b: dist(a, b, state))
 
 def blind_match(primary, secondary, dist):
     """
@@ -181,7 +167,7 @@ def recover_directions(states):
         
         box_from = next(iter(box_from))
         box_to = next(iter(box_to))
-        assert manhattan_dist(current, box_from, box_to) == 1, "Box moved too far in one step"
+        assert navigation.manhattan_distance(box_from, box_to) == 1, "Box moved too far in one step"
         
         dir = directions.movement(box_from, box_to)
         player_push = directions.adjacent(box_from, directions.opposite(dir))

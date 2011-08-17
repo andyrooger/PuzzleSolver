@@ -14,6 +14,7 @@ import solver.state
 from solver.utility import process_exec, simpleframe, buttonselector, astar
 
 from . import pushastar
+from . import navigation
 
 class PushSolver(solver.plugin.Solver):
     """Solver for the PushPuzzle."""
@@ -168,8 +169,8 @@ class SolverConfig(tkinter.Toplevel):
     def _ask_initial(self):
         def cb(usedefaults):
             if usedefaults:
-                h = (lambda s: pushastar.matched_separation(
-                    pushastar.munkres_value, pushastar.path_dist, s))
+                h = pushastar.matched_separation(
+                    pushastar.munkres_value, navigation.path_distance)
                 try:
                     cpus = multiprocessing.cpu_count()
                 except NotImplementedError:
@@ -235,15 +236,15 @@ class SolverConfig(tkinter.Toplevel):
             self._ask_setpriority(kwargs, heuristic, dist)
         self.ask("Which distance function would you like to use?",
                  [
-                  ("Manhattan", pushastar.manhattan_dist),
-                  ("Direct", pushastar.direct_dist),
-                  ("Actual Path", pushastar.path_dist)
+                  ("Manhattan", navigation.manhattan_distance),
+                  ("Direct", navigation.direct_distance),
+                  ("Actual Path", navigation.path_distance)
                  ], callback=cb)
         
     def _ask_setpriority(self, kwargs, heuristic, dist):
         def cb(priority):
-            kwargs["heuristic"] = (lambda s:
-                pushastar.matched_separation(heuristic, dist, s, priority))
+            kwargs["heuristic"] = pushastar.matched_separation(
+                                    heuristic, dist, priority)
             self.finish(**kwargs)
         self.ask("Which set should be the primary set?",
                  [

@@ -8,6 +8,12 @@ import math
 from solver.utility import astar
 from . import directions
 
+############################
+#
+# Distance Functions
+#
+############################
+
 def manhattan_distance(a, b):
     """Get distance from a to b, moving in a grid."""
     
@@ -22,6 +28,12 @@ def path_distance(a, b, state, boxes=False):
     
     route = find_path(a, b, state, boxes)
     return None if route == None else len(route)
+
+###############################
+#
+# Path finding
+#
+###############################
 
 def player_path(state, to):
     """Find the path that the player should take to find 'to'"""
