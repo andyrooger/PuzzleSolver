@@ -233,23 +233,14 @@ class SolverConfig(tkinter.Toplevel):
         
     def _ask_dist(self, kwargs, heuristic):
         def cb(dist):
-            self._ask_setpriority(kwargs, heuristic, dist)
+            kwargs["heuristic"] = pushastar.matched_separation(
+                                    heuristic, dist)
+            self.finish(**kwargs)
         self.ask("Which distance function would you like to use?",
                  [
                   ("Manhattan", navigation.manhattan_distance),
                   ("Direct", navigation.direct_distance),
                   ("Actual Path", navigation.box_path_distance)
-                 ], callback=cb)
-        
-    def _ask_setpriority(self, kwargs, heuristic, dist):
-        def cb(priority):
-            kwargs["heuristic"] = pushastar.matched_separation(
-                                    heuristic, dist)
-            self.finish(**kwargs)
-        self.ask("Which set should be the primary set?",
-                 [
-                  ("Boxes", True),
-                  ("Targets", False)
                  ], callback=cb)
         
 class PushProcess(process_exec.ProcessExecutor):
