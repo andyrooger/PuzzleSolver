@@ -17,7 +17,7 @@ from . import navigation
 #
 ####
 
-def matched_separation(separator, dist, boxprimary=True):
+def matched_separation(separator, dist):
     """
     Get a function that uses separator to find a sum of distance between matched
     boxes/targets.
@@ -29,21 +29,16 @@ def matched_separation(separator, dist, boxprimary=True):
     
     convert = len(inspect.getargspec(dist).args) > 2
     
-    # Avoid as much comparison as we can 
-    if not convert:
-        if boxprimary:
-            return lambda state: separator(state.boxes, state.base.targets, dist)
-        else:
-            return lambda state: separator(state.base.targets, state.boxes, dist)
-    else:
-        if boxprimary:
-            return lambda state: separator(state.boxes, state.base.targets,
-                                           lambda a, b: dist(a, b, state))
-        else:
-            return lambda state: separator(state.base.targets, state.boxes,
-                                           lambda a, b: dist(a, b, state))
+    def sep(state):
+        big = state.base.height * state.base.width + 1
+        def distance(a, b):
+            d = dist(a, b, state) if convert else dist(a, b)
+            return big if d == None else d
+        return separator(state, distance)
+    
+    return sep
 
-def blind_match(primary, secondary, dist):
+def blind_match(state, dist):
     """
     Get the sum of distances of primary items to their nearest secondary.
     
@@ -51,13 +46,13 @@ def blind_match(primary, secondary, dist):
     
     """
     
-    return sum(min(dist(p, s) for s in secondary) for p in primary)
+    return sum(min(dist(p, s) for s in state.base.targets) for p in state.boxes)
 
-def far_match(primary, secondary, dist):
+def far_match(state, dist):
     """Match pairs of items starting with the farthest primary item from anywhere."""
     
-    p_set = set(primary)
-    s_set = set(secondary)
+    p_set = set(state.boxes)
+    s_set = set(state.base.targets)
     
     distances = {
         (p, s): dist(p, s)
@@ -79,11 +74,11 @@ def far_match(primary, secondary, dist):
     
     return total
     
-def close_match(primary, secondary, dist):
+def close_match(state, dist):
     """Match pairs of items starting with the closest."""
 
-    p_set = set(primary)
-    s_set = set(secondary)
+    p_set = set(state.boxes)
+    s_set = set(state.base.targets)
     
     distances = {
         (p, s): dist(p, s)
@@ -102,12 +97,12 @@ def close_match(primary, secondary, dist):
 
 _munkres = munkres.Munkres()
 
-def munkres_value(primary, secondary, dist):
+def munkres_value(state, dist):
     """Get the distance of the best matching between boxes and targets using the munkres algorithm."""
     
     global _munkres
     
-    distances = [[dist(p, s) for p in primary] for s in secondary]
+    distances = [[dist(p, s) for p in state.boxes] for s in state.base.targets]
     return sum(distances[p][s] for p,s in _munkres.compute(distances))
 
 def shift_sum(state):

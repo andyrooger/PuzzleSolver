@@ -170,7 +170,7 @@ class SolverConfig(tkinter.Toplevel):
         def cb(usedefaults):
             if usedefaults:
                 h = pushastar.matched_separation(
-                    pushastar.munkres_value, navigation.path_distance)
+                    pushastar.munkres_value, navigation.box_path_distance)
                 try:
                     cpus = multiprocessing.cpu_count()
                 except NotImplementedError:
@@ -238,13 +238,13 @@ class SolverConfig(tkinter.Toplevel):
                  [
                   ("Manhattan", navigation.manhattan_distance),
                   ("Direct", navigation.direct_distance),
-                  ("Actual Path", navigation.path_distance)
+                  ("Actual Path", navigation.box_path_distance)
                  ], callback=cb)
         
     def _ask_setpriority(self, kwargs, heuristic, dist):
         def cb(priority):
             kwargs["heuristic"] = pushastar.matched_separation(
-                                    heuristic, dist, priority)
+                                    heuristic, dist)
             self.finish(**kwargs)
         self.ask("Which set should be the primary set?",
                  [

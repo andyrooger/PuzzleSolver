@@ -23,10 +23,16 @@ def direct_distance(a, b):
     """Get distance from a to b, moving in a direct line."""
     return math.sqrt(a*a + b*b)
 
-def path_distance(a, b, state, boxes=False):
-    """Get distance from a to b, moving through the given puzzle."""
+def path_distance(a, b, state):
+    """Get distance from a to b, moving through the given puzzle as a player."""
     
-    route = find_path(a, b, state, boxes)
+    route = find_path(a, b, state)
+    return None if route == None else len(route)
+
+def box_path_distance(a, b, state):
+    """Get distance from a to b, moving through the given puzzle as a box."""
+    
+    route = find_box_path(a, b, state)
     return None if route == None else len(route)
 
 ###############################
@@ -35,32 +41,47 @@ def path_distance(a, b, state, boxes=False):
 #
 ###############################
 
+def can_move_player(state, pos, direction):
+    """Can we move a player at pos in the given direction."""
+    return directions.adjacent(pos, direction) in state.accessible
+
+def can_move_box(state, pos, direction, ignore=None, ignoreall=False):
+    """
+    Can we move a box in the given direction? ...Assuming the player can push from
+    there and the box exists. Similar to function in puzzle state but without check
+    for player accessibility.
+    """
+    frm = directions.adjacent(pos, directions.opposite(direction))
+    to = directions.adjacent(pos, direction)
+    if ignoreall:
+        return (frm not in state.base.walls and to not in state.base.walls)
+    else:
+        return ((frm == ignore or state.cleared_square(frm))
+                and (to == ignore or state.cleared_square(to)))
+
 def player_path(state, to):
     """Find the path that the player should take to find 'to'"""
     
-    return find_path(state.player, to, state, True)
+    return find_path(state.player, to, state)
 
-def find_path(a, b, state, boxes=True):
+def find_path(a, b, state):
     """
     Find the directions needed to navigate from a to b within state.
     
-    boxes indicates whether the boxes should be taken into account when
-    generating the path. This will return None if the journey is not
-    possible.
+    Takes This will return None if the journey is not possible.
     
     """
     
     if not state.finalised:
         raise ValueError("State has not been finalised so we cannot path-find.")
-    if boxes and b not in state.accessible:
+    if b not in state.accessible:
         return None
     
-    if boxes:
-        ok = (lambda pos: pos in state.accessible)
-    else:
-        ok = (lambda pos: pos not in state.base.walls and state.base.in_area(pos))
+    ok = (lambda pos: pos in state.accessible)
     
     def transitions(pos):
+        #ds = [d for d in directions.DIRECTIONS if can_move_player(state, pos, d)]
+        #return [(directions.adjacent(pos, d), d, 1) for d in ds]
         dirs = directions.adjacent(pos)
         return [(dirs[k], k, 1) for k in dirs if ok(dirs[k])]
     
@@ -69,3 +90,23 @@ def find_path(a, b, state, boxes=True):
                                  (lambda pos: pos == b),
                                  (lambda pos: manhattan_distance(pos, b)),
                                  transitions).solve()
+
+def find_box_path(a, b, state, ignore_boxes=True):
+    """
+    Find the directions needed to navigate a box from a to b within state.
+    
+    Takes This will return None if the journey is not possible.
+    
+    """
+    
+    def transitions(pos):
+        ds = [d for d in directions.DIRECTIONS if
+              can_move_box(state, pos, d, ignore=a, ignoreall=ignore_boxes)]
+        return [(directions.adjacent(pos, d), d, 1) for d in ds]
+    
+    return astar.TransitionAStar(astar.AStar,
+                                 a,
+                                 (lambda pos: pos == b),
+                                 (lambda pos: manhattan_distance(pos, b)),
+                                 transitions).solve()
+
