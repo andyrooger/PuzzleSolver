@@ -468,33 +468,26 @@ class ServedAStar(AStar):
             pipe.send(None)
 
     def solve(self):
-        try:
-            rlock = multiprocessing.Lock()
-            wlock = multiprocessing.Lock()
-            server_pipe, worker_pipe = multiprocessing.Pipe()
-            waiting = self._groupsize
-            processes = [
-                multiprocessing.Process(target=self._step_worker, args=(worker_pipe, rlock, wlock))
-                for _ in range(self._groupsize)
-            ]
-            for proc in processes:
-                proc.daemon = True
-                proc.start()
-            while True:
-                waiting = self._distribute_work(server_pipe, waiting)
-                if waiting == self._groupsize:
-                    self._stop_processes(server_pipe, waiting)
-                    return None
-                waiting, goal = self._receive_results(server_pipe, waiting)
-                if goal != None:
-                    self._stop_processes(server_pipe, waiting)
-                    return self.generate_path(goal)
-        finally:
-            while any(p.is_alive() for p in processes):
-                if server_pipe.poll():
-                    server_pipe.recv()
-            server_pipe.close()
-            worker_pipe.close()
+        rlock = multiprocessing.Lock()
+        wlock = multiprocessing.Lock()
+        server_pipe, worker_pipe = multiprocessing.Pipe()
+        waiting = self._groupsize
+        processes = [
+            multiprocessing.Process(target=self._step_worker, args=(worker_pipe, rlock, wlock))
+            for _ in range(self._groupsize)
+        ]
+        for proc in processes:
+            proc.daemon = True
+            proc.start()
+        while True:
+            waiting = self._distribute_work(server_pipe, waiting)
+            if waiting == self._groupsize:
+                self._stop_processes(server_pipe, waiting)
+                return None
+            waiting, goal = self._receive_results(server_pipe, waiting)
+            if goal != None:
+                self._stop_processes(server_pipe, waiting)
+                return self.generate_path(goal)
 
 
 class PulledAStar(AStar):
