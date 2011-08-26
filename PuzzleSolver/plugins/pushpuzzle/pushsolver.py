@@ -11,7 +11,7 @@ import time
 
 import solver.plugin
 import solver.state
-from solver.utility import process_exec, simpleframe, buttonselector, astar
+from solver.utility import process_exec, buttonselector, astar
 
 from . import pushastar
 from . import navigation
@@ -47,7 +47,8 @@ class PushSolver(solver.plugin.Solver):
         should not be possible from the main window.
         """
         
-        self._solver.cancel()
+        if self._solver != None:
+            self._solver.cancel()
         self._playframe.freeze(False)
         # Now let the dialog decide what to do with it
         return True
@@ -140,108 +141,81 @@ class SolverConfig(tkinter.Toplevel):
         self.grab_set()
         self.transient(master)
         self.protocol("WM_DELETE_WINDOW", (lambda: False))
+        self.resizable(False, False)
         
-        self.rowconfigure(1, weight=1)
-        self.columnconfigure(1, weight=1)
+        tkinter.Label(self, text="Solver Type").grid(sticky="nsew", row=0, column=0)
+        self._solver = buttonselector.ButtonSelector(self, vertical=True, selected=self._change_setting)
+        self._solver.add("Basic A*", astar.AStar)
+        self._solver.add("Parallel Symmetric A*", astar.SymmetricAStar)
+        self._solver.add("Parallel Served A*", astar.ServedAStar)
+        self._solver.add("Parallel Pulled A*", astar.PulledAStar)
+        self._solver.grid(sticky="nsew", row=1, column=0)
         
-        self._question = tkinter.Label(self)
-        self._question.grid(sticky="new")
-        self._content = simpleframe.SimpleFrame(self)
-        self._content.grid(sticky="nsew")
-        
-        self._ask_initial()
-        
-    def ask(self, question, answers, callback=None):
-        """Ask a question."""
-        
-        self._question.config(text=question)
-        selector = buttonselector.ButtonSelector(self._content, vertical=True, selected=callback)
-        for a, obj in answers:
-            selector.add(a, obj)
-        self._content.set_content(selector)
-        
-    def finish(self, *vargs, **kwargs):
-        """Spit out the given solver arguments."""
-        
-        self.destroy()
-        self._done(*vargs, **kwargs)
-        
-    def _ask_initial(self):
-        def cb(usedefaults):
-            if usedefaults:
-                h = pushastar.matched_separation(
-                    pushastar.munkres_value, navigation.box_path_distance)
-                try:
-                    cpus = multiprocessing.cpu_count()
-                except NotImplementedError:
-                    cpus = 2
-                self.finish(heuristic=h, solver=astar.ServedAStar, groupsize=cpus)
-            else:
-                self._ask_solver()
-        self.ask("Would you like to use solver defaults or manage this by your self?",
-                 [
-                  ("Use Defaults", True),
-                  ("Configure on my Own.", False)
-                 ], callback=cb)
-        
-    def _ask_solver(self):
-        def cb(solver):
-            kwargs = {"solver": solver}
-            if solver is astar.AStar:
-                self._ask_heuristic(kwargs)
-            else:
-                self._ask_processes(kwargs)
-            
-        self.ask("What type of solver do you want to use?",
-                 [
-                  ("Basic A*", astar.AStar),
-                  ("Parallel Symmetric A*", astar.SymmetricAStar),
-                  ("Parallel Served A*", astar.ServedAStar),
-                  ("Parallel Pulled A*", astar.PulledAStar)
-                 ], callback=cb)
-        
-    def _ask_processes(self, kwargs):
-        def cb(num):
-            kwargs["groupsize"] =  num
-            self._ask_heuristic(kwargs)
-        
-        proc_ans = [(str(x), x) for x in [1, 2, 5, 10, 20]]
+        tkinter.Label(self, text="Num Processes").grid(sticky="nsew", row=0, column=1)
+        self._processes = buttonselector.ButtonSelector(self, vertical=True, selected=self._change_setting)
         try:
             cpus = multiprocessing.cpu_count()
         except NotImplementedError:
             pass
         else:
-            proc_ans.insert(0, ("One per Core (%s)" % cpus, cpus))
-        self.ask("How many processes do you want to run?",
-                 proc_ans, callback=cb)
-    
-    def _ask_heuristic(self, kwargs):
-        def cb(heuristic):
-            if heuristic is pushastar.shift_sum:
-                kwargs["heuristic"] = heuristic
-                self.finish(**kwargs)
-            else:
-                self._ask_dist(kwargs, heuristic)
-        self.ask("Which heuristic would you like to use?",
-                 [
-                  ("Blind Matching", pushastar.blind_match),
-                  ("Far Matching", pushastar.far_match),
-                  ("Close Matching", pushastar.close_match),
-                  ("Hungarian Matching", pushastar.munkres_value),
-                  ("Shift Sum", pushastar.shift_sum)
-                 ], callback=cb)
+            self._processes.add("One per Core (%s)" % cpus, cpus)
+        for i in [1, 2, 5, 10, 20]:
+            self._processes.add(str(i), i)
+        self._processes.grid(sticky="nsew", row=1, column=1)
         
-    def _ask_dist(self, kwargs, heuristic):
-        def cb(dist):
-            kwargs["heuristic"] = pushastar.matched_separation(
-                                    heuristic, dist)
-            self.finish(**kwargs)
-        self.ask("Which distance function would you like to use?",
-                 [
-                  ("Manhattan", navigation.manhattan_distance),
-                  ("Direct", navigation.direct_distance),
-                  ("Actual Path", navigation.box_path_distance)
-                 ], callback=cb)
+        tkinter.Label(self, text="Heuristic").grid(sticky="nsew", row=0, column=2)
+        self._heuristic = buttonselector.ButtonSelector(self, vertical=True, selected=self._change_setting)
+        self._heuristic.add("Blind Matching", pushastar.blind_match)
+        self._heuristic.add("Far Matching", pushastar.far_match)
+        self._heuristic.add("Close Matching", pushastar.close_match)
+        self._heuristic.add("Hungarian Matching", pushastar.munkres_value)
+        self._heuristic.add("Shift Sum", pushastar.shift_sum)
+        self._heuristic.grid(sticky="nsew", row=1, column=2)
+        
+        tkinter.Label(self, text="Distances").grid(sticky="nsew", row=0, column=3)
+        self._distance = buttonselector.ButtonSelector(self, vertical=True, selected=self._change_setting)
+        self._distance.add("Manhattan", navigation.manhattan_distance)
+        self._distance.add("Direct", navigation.direct_distance)
+        self._distance.add("Actual Path", navigation.box_path_distance)
+        self._distance.grid(sticky="nsew", row=1, column=3)
+        
+        self._btns = tkinter.Frame(self)
+        self._btns.columnconfigure(2, weight=1)
+        tkinter.Button(self._btns, text="Reset to Defaults", command=self._defaults).grid(sticky="nsew", row=0, column=0)
+        tkinter.Button(self._btns, text="Cancel", command=self._cancelled).grid(sticky="nsew", row=0, column=1)
+        tkinter.Button(self._btns, text="Solve", command=self._solve).grid(sticky="nsew", row=0, column=2)
+        self._btns.grid(sticky="nsew", columnspan=4, row=2, column=0)
+        
+        self._defaults()
+            
+    def _change_setting(self, change):
+        """One of the settings has been changed."""
+        
+        print(change)
+        print(self._distance.selection())
+        # solver changed: blank processes if normal astar selected
+        # heuristic: blank distances if shift sum selected
+        
+    def _cancelled(self):
+        if solver.state.solving.change(None):
+            self.destroy()
+            
+    def _defaults(self):
+        pass
+        # heuristic = pushastar.matched_separation(pushastar.munkres_value, navigation.box_path_distance)
+        # solver = astar.ServedAStar
+        # groupsize = multiprocessing.cpu_count() or 2
+        
+    def _solve(self):
+        # Just choosing the default for now
+        h = pushastar.matched_separation(
+            pushastar.munkres_value, navigation.box_path_distance)
+        try:
+            cpus = multiprocessing.cpu_count()
+        except NotImplementedError:
+            cpus = 2
+        self.destroy()
+        self._done(heuristic=h, solver=astar.ServedAStar, groupsize=cpus)
         
 class PushProcess(process_exec.ProcessExecutor):
     """Process executor for solving a push puzzle."""
