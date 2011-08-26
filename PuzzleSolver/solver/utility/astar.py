@@ -101,26 +101,6 @@ class UniqueLayeredAStarStorage(LayeredAStarStorage):
         super()._add_state(item)
 
 
-class BasicAStarStorage(UsefulStorage):
-    """Uses set for the most basic implementation of our set."""
-
-    def __init__(self):
-        self._collection = set()
-        self._parents = {}
-
-    def _add_parent(self, state, parent):
-        s, cost, _2 = state
-        self._parents[s] = (parent, cost)
-
-    def _add_state(self, item):
-        self._collection.add(item)
-
-    def take(self): # raises key error if none exists
-        return self._collection.pop()
-
-    def parent(self, state):
-        return self._parents[state]
-
 def StorageManager(Storage):
     """Create a class that spawns a new process to control the class and acts as a proxy anywhere else."""
 

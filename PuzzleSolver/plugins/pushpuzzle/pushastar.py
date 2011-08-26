@@ -30,10 +30,8 @@ def matched_separation(separator, dist):
     convert = len(inspect.getargspec(dist).args) > 2
     
     def sep(state):
-        big = state.base.height * state.base.width + 1
         def distance(a, b):
-            d = dist(a, b, state) if convert else dist(a, b)
-            return big if d == None else d
+            return dist(a, b, state) if convert else dist(a, b)
         return separator(state, distance)
     
     return sep
@@ -46,7 +44,12 @@ def blind_match(state, dist):
     
     """
     
-    return sum(min(dist(p, s) for s in state.base.targets) for p in state.boxes)
+    try:
+        return sum(
+                   min(d for d in (dist(p, s) for s in state.base.targets) if d != None)
+                   for p in state.boxes)
+    except ValueError: # There was no accessible target
+        return None
 
 def far_match(state, dist):
     """Match pairs of items starting with the farthest primary item from anywhere."""
@@ -60,12 +63,17 @@ def far_match(state, dist):
         for s in s_set
     }
     
+    big = state.base.height * state.base.width + 1 # larger than distance could possibly be
+    distances = {k: (big if distances[k] == None else distances[k]) for k in distances}
+    
     total = 0
     while p_set:
         closest_s = {
             p: min(s_set, key=(lambda s: distances[(p, s)]))
             for p in p_set
         }
+        if any(distances[(p, closest_s[p])] == big for p in p_set):
+            return None
         paired_p = max(p_set, key=(lambda p: distances[(p, closest_s[p])]))
         paired_s = closest_s[paired_p]
         total += distances[(paired_p, paired_s)]
@@ -85,10 +93,14 @@ def close_match(state, dist):
         for p in p_set
         for s in s_set
     }
+    big = state.base.height * state.base.width + 1
+    keyfunc = (lambda k: big if distances[k] == None else distances[k])
     
     total = 0
     while p_set and s_set:
-        closest = min( ((p, s) for p in p_set for s in s_set), key=distances.get)
+        closest = min( ((p, s) for p in p_set for s in s_set), key=keyfunc)
+        if distances[closest] == None:
+            return
         total += distances[closest]
         p_set.remove(closest[0])
         s_set.remove(closest[1])
@@ -102,13 +114,19 @@ def munkres_value(state, dist):
     
     global _munkres
     
+    big = state.base.height * state.base.width + 1 # larger than distance could possibly be
     distances = [[dist(p, s) for p in state.boxes] for s in state.base.targets]
-    return sum(distances[p][s] for p,s in _munkres.compute(distances))
+    distances = [[big if d == None else d for d in row] for row in distances]
+    
+    closest_match = [distances[p][s] for p,s in _munkres.compute(distances)]
+    if big in closest_match:
+        return None
+    return sum(closest_match)
 
 def shift_sum(state):
     """Align targets and boxes in a single dimensions and sum the distances in these dimensions."""
 
-    # Actually only need to sort coordinates, not boxes
+    # Actually only need to sort ordinates, not boxes
     box_x, box_y = zip(*state.boxes)
     target_x, target_y = zip(*state.base.targets)
     
