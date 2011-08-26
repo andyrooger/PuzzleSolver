@@ -14,11 +14,4 @@
 	<natures>
 		<nature>org.python.pydev.pythonNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>src</name>
-			<type>2</type>
-			<locationURI>PARENT-1-PROJECT_LOC/PuzzleSolver</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>
