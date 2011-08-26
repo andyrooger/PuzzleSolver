@@ -81,6 +81,11 @@ class PuzzleDescription:
         if y < 0 or y >= self.height:
             return False
         return True
+    
+    def empty_square(self, pos):
+        """Are the coordinates in our range and not a wall?"""
+        
+        return self.in_area(pos) and pos not in self.walls
 
     def valid(self, children=True):
         """Is this a valid setup?"""
@@ -119,19 +124,16 @@ class PuzzleState:
         self.finalised = True
 
     def valid(self):
-        if self.player == None or not self.base.in_area(self.player):
+        if self.player == None or not self.base.empty_square(self.player):
             return False
 
         if len(self.boxes) != len(self.base.targets):
             return False
 
-        if not all(self.base.in_area(pos) for pos in self.boxes):
+        if not all(self.base.empty_square(pos) for pos in self.boxes):
             return False
 
-        if self.player in self.base.walls.union(self.boxes):
-            return False
-
-        if self.boxes.intersection(self.base.walls):
+        if self.player in self.boxes:
             return False
 
         return True
@@ -148,13 +150,9 @@ class PuzzleState:
         tocheck = [self.player]
         while tocheck:
             pos = tocheck.pop()
-            if not self.base.in_area(pos):
-                continue
             if pos in accessible:
                 continue
-            if pos in self.base.walls:
-                continue
-            if pos in self.boxes:
+            if not self.cleared_square(pos):
                 continue
             accessible.add(pos)
             x, y = pos
@@ -164,9 +162,7 @@ class PuzzleState:
     def cleared_square(self, pos):
         """Is this a valid square with nothing on it."""
         
-        return (self.base.in_area(pos) and
-                pos not in self.boxes and
-                pos not in self.base.walls)
+        return (self.base.empty_square(pos) and pos not in self.boxes)
 
     def can_move_box(self, box, direction):
         """Assuming box is a box, can we move it in the given direction?"""

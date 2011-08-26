@@ -54,7 +54,7 @@ def can_move_box(state, pos, direction, ignore=None, ignoreall=False):
     frm = directions.adjacent(pos, directions.opposite(direction))
     to = directions.adjacent(pos, direction)
     if ignoreall:
-        return (frm not in state.base.walls and to not in state.base.walls)
+        return (state.base.empty_square(frm) and state.base.empty_square(to))
     else:
         return ((frm == ignore or state.cleared_square(frm))
                 and (to == ignore or state.cleared_square(to)))
