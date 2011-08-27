@@ -220,14 +220,25 @@ class SolverConfig(tkinter.Toplevel):
         
     def _solve(self):
         # Just choosing the default for now
-        h = pushastar.matched_separation(
-            pushastar.munkres_value, navigation.box_path_distance)
-        try:
-            cpus = multiprocessing.cpu_count()
-        except NotImplementedError:
-            cpus = 2
+        conf = {"solver": self._solver.selection()}
+        if conf["solver"] is None:
+            return
+        if conf["solver"] is not astar.AStar:
+            conf["groupsize"] = self._processes.selection()
+            if conf["groupsize"] is None:
+                return
+            
+        conf["heuristic"] = self._heuristic.selection()
+        if conf["heuristic"] is None:
+            return
+        if conf["heuristic"] is not pushastar.shift_sum:
+            dist = self._distance.selection()
+            if dist is None:
+                return
+            conf["heuristic"] = pushastar.matched_separation(conf["heuristic"], dist)
+        
         self.destroy()
-        self._done(heuristic=h, solver=astar.ServedAStar, groupsize=cpus)
+        self._done(**conf)
         
 class PushProcess(process_exec.ProcessExecutor):
     """Process executor for solving a push puzzle."""
