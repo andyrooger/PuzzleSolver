@@ -29,8 +29,14 @@ def path_distance(a, b, state):
     route = find_path(a, b, state)
     return None if route == None else len(route)
 
+def box_basic_distance(a, b, state):
+    """Get distance from a to b, moving through the basic puzzle as a player. (Ignores boxes)"""
+
+    route = find_path(a, b, state, ignorestate=True)
+    return None if route == None else len(route)
+
 def box_path_distance(a, b, state):
-    """Get distance from a to b, moving through the given puzzle as a box."""
+    """Get distance from a to b, moving through the basic puzzle as a box. (Ignores other boxes)"""
     
     route = find_box_path(a, b, state)
     return None if route == None else len(route)
@@ -64,7 +70,7 @@ def player_path(state, to):
     
     return find_path(state.player, to, state)
 
-def find_path(a, b, state):
+def find_path(a, b, state, ignorestate=False):
     """
     Find the directions needed to navigate from a to b within state.
     
@@ -77,7 +83,7 @@ def find_path(a, b, state):
     if b not in state.accessible:
         return None
     
-    ok = (lambda pos: pos in state.accessible)
+    ok = state.base.empty_square if ignorestate else (lambda pos: pos in state.accessible)
     
     def transitions(pos):
         #ds = [d for d in directions.DIRECTIONS if can_move_player(state, pos, d)]

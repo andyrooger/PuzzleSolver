@@ -173,7 +173,8 @@ class SolverConfig(tkinter.Toplevel):
         self._distance = buttonselector.ButtonSelector(self, vertical=True, selected=self._change_setting)
         self._distance.add("Manhattan", navigation.manhattan_distance)
         self._distance.add("Direct", navigation.direct_distance)
-        self._distance.add("Actual Path", navigation.box_path_distance)
+        self._distance.add("Basic Path", navigation.box_basic_distance)
+        self._distance.add("Box Path", navigation.box_path_distance)
         self._distance.grid(sticky="nsew", row=1, column=3)
         
         self._btns = tkinter.Frame(self)
