@@ -153,11 +153,8 @@ class SolverConfig(tkinter.Toplevel):
         
         tkinter.Label(self, text="Num Processes").grid(sticky="nsew", row=0, column=1)
         self._processes = buttonselector.ButtonSelector(self, vertical=True, selected=self._change_setting)
-        try:
-            cpus = multiprocessing.cpu_count()
-        except NotImplementedError:
-            pass
-        else:
+        cpus = self._cpus()
+        if cpus != None:
             self._processes.add("One per Core (%s)" % cpus, cpus)
         for i in [1, 2, 5, 10, 20]:
             self._processes.add(str(i), i)
@@ -188,23 +185,38 @@ class SolverConfig(tkinter.Toplevel):
         
         self._defaults()
             
+    def _cpus(self):
+        """Get number of CPUs or None."""
+        
+        try:
+            return multiprocessing.cpu_count()
+        except NotImplementedError:
+            return None
+    
     def _change_setting(self, change):
         """One of the settings has been changed."""
         
-        print(change)
-        print(self._distance.selection())
-        # solver changed: blank processes if normal astar selected
-        # heuristic: blank distances if shift sum selected
+        self._processes.set_enabled(self._solver.selection() is not astar.AStar)
+        self._distance.set_enabled(self._heuristic.selection() is not pushastar.shift_sum)
         
     def _cancelled(self):
         if solver.state.solving.change(None):
             self.destroy()
             
-    def _defaults(self):
-        pass
-        # heuristic = pushastar.matched_separation(pushastar.munkres_value, navigation.box_path_distance)
-        # solver = astar.ServedAStar
-        # groupsize = multiprocessing.cpu_count() or 2
+    def _defaults(self, choice=None):
+        if choice is None:
+            self._defaults(self._solver)
+            self._defaults(self._processes)
+            self._defaults(self._heuristic)
+            self._defaults(self._distance)
+        elif choice is self._solver:
+            choice.selection(astar.ServedAStar)
+        elif choice is self._processes:
+            choice.selection(self._cpus() or 1) # cpus never 0 (I hope!)
+        elif choice is self._heuristic:
+            choice.selection(pushastar.munkres_value)
+        elif choice is self._distance:
+            choice.selection(navigation.box_path_distance)
         
     def _solve(self):
         # Just choosing the default for now
