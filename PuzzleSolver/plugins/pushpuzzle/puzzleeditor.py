@@ -5,6 +5,7 @@ Editor frame for push puzzle.
 
 import tkinter
 
+from . analysisdialog import AnalysisDialog
 from . puzzle import Puzzle
 from solver.utility.buttonselector import ButtonSelector
 from solver.utility.scrollable_window import ScrollableWindow
@@ -24,7 +25,9 @@ class PuzzleEditor(tkinter.Frame):
         self._modeselect.grid(sticky="nsew", row=1, column=0)
 
         self._creation = CreationArea(self, puzzle, getmode=self._modeselect.selection)
-        self._creation.grid(sticky="nsew", row=0, column=0)
+        self._creation.grid(sticky="nsew", row=0, column=0, columnspan=2)
+        
+        tkinter.Button(self, text="Analyse", command=self._analyse).grid(sticky="nsew", row=1, column=1)
 
     def get_puzzle(self):
         return self._creation.get_puzzle()
@@ -34,6 +37,11 @@ class PuzzleEditor(tkinter.Frame):
 
     def changed(self):
         return self._creation.changed()
+    
+    def _analyse(self):
+        puzzle = self._creation.get_puzzle()
+        self.wait_window(AnalysisDialog(self, puzzle))
+        
 
 class CreationArea(ScrollableWindow):
     """Creation area, containing scrolled grid of tiles."""
