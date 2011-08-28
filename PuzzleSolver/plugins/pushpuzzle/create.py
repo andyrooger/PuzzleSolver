@@ -80,7 +80,7 @@ class CreateFrame(SimpleFrame):
             return False
 
 class PuzzleSetup(tkinter.Frame):
-    def __init__(self, master, callback=(lambda r, c: None)):
+    def __init__(self, master, callback=(lambda p: None)):
         tkinter.Frame.__init__(self, master)
         self._callback = callback
 
@@ -124,6 +124,7 @@ class PuzzleSetup(tkinter.Frame):
         """Create a puzzle based on dimensions."""
         
         p = Puzzle(self._rows.get(), self._columns.get())
+        p.base.finalise()
         p.initial().finalise()
         self._callback(p)
 

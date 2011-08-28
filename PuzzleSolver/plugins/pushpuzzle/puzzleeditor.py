@@ -140,6 +140,7 @@ class CreationArea(ScrollableWindow):
                     p.base.walls.add(tile.pos)
                 if tile.target():
                     p.base.targets.add(tile.pos)
+        p.base.finalise()
         p.initial().finalise()
         return p
 

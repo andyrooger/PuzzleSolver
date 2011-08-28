@@ -5,6 +5,39 @@ Contains the structures to store our puzzles in.
 
 from . import directions
 
+#########
+#
+# Enable finalisation of a state.
+#
+#########
+
+def finalisable(cls):
+    """Allows finalisation of a class."""
+    
+    class Finalisable(cls):
+        def __init__(self, *vargs, **kwargs):
+            super().__init__(*vargs, **kwargs)
+            
+            self.finalised = False # Shouldn't edit directly
+
+        def __setattr__(self, *vargs):
+            try:
+                if self.finalised:
+                    raise ValueError("Cannot edit a finalised puzzle state.")
+            except AttributeError:
+                pass
+            
+            super().__setattr__(*vargs)
+
+        def finalise(self, *vargs, **kwargs):
+            if self.finalised:
+                return
+            if hasattr(super(), "finalise"):
+                super().finalise(*vargs, **kwargs)
+            self.finalised = True
+            
+    return Finalisable
+
 class Puzzle:
     """Main class for storing our puzzles."""
     
@@ -65,6 +98,7 @@ class Puzzle:
     def __len__(self):
         return len(self._states)
 
+@finalisable
 class PuzzleDescription:
     def __init__(self, h, w):
         self.height = h
@@ -98,6 +132,7 @@ class PuzzleDescription:
 
         return True
 
+@finalisable
 class PuzzleState:
     """Information on parts of the puzzle that can change during the play."""
 
@@ -105,23 +140,12 @@ class PuzzleState:
         self.base = base
         self.player = None
         self.boxes = set()
-        self.finalised = False
-
-    # Allow finalisation
-    def __setattr__(self, *vargs):
-        if not hasattr(self, "finalised") or not self.finalised:
-            super().__setattr__(*vargs)
-        else:
-            raise ValueError("Cannot edit a finalised puzzle state.")
 
     def finalise(self, freeze=True):
-        if self.finalised:
-            return
         self._record_accessibility()
         if freeze:
             self.boxes = frozenset(self.boxes)
         self._hash_obj = (min(self.accessible) if self.accessible else None, self.boxes)
-        self.finalised = True
 
     def valid(self):
         if self.player == None or not self.base.empty_square(self.player):
